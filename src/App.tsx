@@ -89,105 +89,176 @@ spec:
   }}
 >
       {/* Left sidebar */}
-      <aside
-        style={{
-          gridRow: '1 / 3',
-          background: '#252526',
-          borderRight: '1px solid #3E3E42',
-          display: 'flex',
-          flexDirection: 'column',
-          padding: '20px 16px',
-        }}
-      >
-        <div style={{ marginBottom: 24 }}>
-          <h1
-            style={{
-              margin: 0,
-              fontSize: 13,
-              fontWeight: 600,
-              letterSpacing: 0.5,
-              color: '#CCCCCC',
-            }}
-          >
-            K8s YAML Lint
-          </h1>
-          <p
-            style={{
-              margin: '4px 0 0',
-              fontSize: 11,
-              color: '#858585',
-            }}
-          >
-            In-browser validation
-          </p>
-        </div>
+     {/* Left sidebar */}
+<aside
+  style={{
+    gridRow: '1 / 3',
+    background: '#252526',
+    borderRight: '1px solid #3E3E42',
+    display: 'flex',
+    flexDirection: 'column',
+    padding: '24px 20px',
+  }}
+>
+  {/* Header */}
+  <div style={{ marginBottom: 32 }}>
+    <h1
+      style={{
+        margin: 0,
+        fontSize: 14,
+        fontWeight: 600,
+        letterSpacing: 0.3,
+        color: '#E5E7EB',
+        marginBottom: 6,
+      }}
+    >
+      K8s YAML Lint
+    </h1>
+    <p
+      style={{
+        margin: 0,
+        fontSize: 11,
+        color: '#9CA3AF',
+        fontWeight: 400,
+      }}
+    >
+      In-browser validation
+    </p>
+  </div>
 
-        <div
+  {/* Stats Card */}
+  <div
+    style={{
+      padding: '16px',
+      background: '#1E1E1E',
+      border: '1px solid #3E3E42',
+      borderRadius: 6,
+      marginBottom: 24,
+    }}
+  >
+    <div
+      style={{
+        fontSize: 10,
+        color: '#6B7280',
+        textTransform: 'uppercase',
+        letterSpacing: 0.8,
+        marginBottom: 12,
+        fontWeight: 500,
+      }}
+    >
+      Diagnostics
+    </div>
+    
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <span style={{ fontSize: 12, color: '#D1D5DB' }}>Errors</span>
+        <span
           style={{
-            padding: '12px',
-            background: '#2D2D30',
-            borderRadius: 4,
-            fontSize: 11,
-            lineHeight: 1.6,
+            fontSize: 13,
+            color: errors.length === 0 ? '#10B981' : '#EF4444',
+            fontWeight: 600,
+            fontFamily: 'monospace',
           }}
         >
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              marginBottom: 8,
-            }}
-          >
-            <span style={{ color: '#858585' }}>Errors</span>
-            <span
-              style={{
-                color: errors.length === 0 ? '#4EC9B0' : '#F48771',
-                fontWeight: 500,
-              }}
-            >
-              {errors.length}
-            </span>
-          </div>
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              marginBottom: 8,
-            }}
-          >
-            <span style={{ color: '#858585' }}>Warnings</span>
-            <span
-              style={{
-                color: warnings.length === 0 ? '#4EC9B0' : '#CE9178',
-                fontWeight: 500,
-              }}
-            >
-              {warnings.length}
-            </span>
-          </div>
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-            }}
-          >
-            <span style={{ color: '#858585' }}>Total</span>
-            <span style={{ color: '#CCCCCC', fontWeight: 500 }}>
-              {markers.length}
-            </span>
-          </div>
-        </div>
+          {errors.length}
+        </span>
+      </div>
+      
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <span style={{ fontSize: 12, color: '#D1D5DB' }}>Warnings</span>
+        <span
+          style={{
+            fontSize: 13,
+            color: warnings.length === 0 ? '#10B981' : '#F59E0B',
+            fontWeight: 600,
+            fontFamily: 'monospace',
+          }}
+        >
+          {warnings.length}
+        </span>
+      </div>
+      
+      <div
+        style={{
+          height: 1,
+          background: '#3E3E42',
+          margin: '4px 0',
+        }}
+      />
+      
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <span style={{ fontSize: 12, color: '#9CA3AF', fontWeight: 500 }}>Total</span>
+        <span
+          style={{
+            fontSize: 13,
+            color: '#E5E7EB',
+            fontWeight: 600,
+            fontFamily: 'monospace',
+          }}
+        >
+          {markers.length}
+        </span>
+      </div>
+    </div>
+  </div>
 
-        <div style={{ marginTop: 24, fontSize: 11, color: '#858585' }}>
-          <p style={{ margin: '0 0 8px', lineHeight: 1.5 }}>
-            Paste your Kubernetes manifests into the editor. YAML syntax and
-            schema errors appear below.
-          </p>
-          <p style={{ margin: '8px 0 0', lineHeight: 1.5 }}>
-            No data leaves your browser.
-          </p>
-        </div>
-      </aside>
+  {/* Status Indicator */}
+  <div
+    style={{
+      padding: '12px 14px',
+      background: errors.length === 0 ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+      border: `1px solid ${errors.length === 0 ? 'rgba(16, 185, 129, 0.3)' : 'rgba(239, 68, 68, 0.3)'}`,
+      borderRadius: 6,
+      marginBottom: 24,
+    }}
+  >
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+      <div
+        style={{
+          width: 6,
+          height: 6,
+          borderRadius: '50%',
+          background: errors.length === 0 ? '#10B981' : '#EF4444',
+        }}
+      />
+      <span
+        style={{
+          fontSize: 11,
+          color: errors.length === 0 ? '#10B981' : '#EF4444',
+          fontWeight: 500,
+        }}
+      >
+        {errors.length === 0 ? 'Valid manifest' : 'Issues detected'}
+      </span>
+    </div>
+  </div>
+
+  {/* Info Section */}
+  <div style={{ fontSize: 11, color: '#9CA3AF', lineHeight: 1.6 }}>
+    <p style={{ margin: '0 0 12px 0' }}>
+      Paste your Kubernetes manifests. YAML syntax and schema errors appear in real-time.
+    </p>
+    <p style={{ margin: 0 }}>
+      All validation runs locally—no data leaves your browser.
+    </p>
+  </div>
+
+  {/* Spacer */}
+  <div style={{ flex: 1 }} />
+
+  {/* Footer */}
+  <div
+    style={{
+      paddingTop: 16,
+      borderTop: '1px solid #3E3E42',
+      fontSize: 10,
+      color: '#6B7280',
+      textAlign: 'center',
+    }}
+  >
+    Powered by Monaco & K8s schema
+  </div>
+</aside>
 
       {/* Main editor */}
       <main
