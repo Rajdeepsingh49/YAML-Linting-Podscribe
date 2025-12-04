@@ -24,8 +24,10 @@
   --color-text-secondary: #86868B;
   --color-text-tertiary: #B5B5B8;
 
-  --color-border: #D2D2D7;
-  --color-border-light: #E5E5E5;
+  /* Elegant Minimal Borders - Much Lighter */
+  --color-border: rgba(0, 0, 0, 0.06);
+  --color-border-light: rgba(0, 0, 0, 0.04);
+  --color-border-hover: rgba(0, 0, 0, 0.12);
 
   /* Apple Accent Colors */
   --color-blue: #007AFF;
@@ -88,8 +90,10 @@
   --color-text-secondary: #86868B;
   --color-text-tertiary: #636366;
 
-  --color-border: #38383A;
-  --color-border-light: #48484A;
+  /* Elegant Minimal Borders - Dark Mode */
+  --color-border: rgba(255, 255, 255, 0.08);
+  --color-border-light: rgba(255, 255, 255, 0.05);
+  --color-border-hover: rgba(255, 255, 255, 0.15);
 
   /* Dark Mode Accents */
   --color-blue: #0A84FF;

@@ -233,8 +233,8 @@ export const UnifiedValidator: React.FC = () => {
 
     return (
         <div className="h-screen flex flex-col bg-gradient-to-br from-[var(--color-bg-primary)] to-[var(--color-bg-secondary)] overflow-hidden font-sans" data-theme={theme}>
-            {/* Header Bar - Clean & Minimal */}
-            <header className="h-14 flex-shrink-0 flex items-center justify-between px-5 border-b border-[var(--color-border)]/10 bg-[var(--color-bg-primary)]/70 backdrop-blur-xl z-30">
+            {/* Header Bar - Clean & Borderless */}
+            <header className="h-14 flex-shrink-0 flex items-center justify-between px-5 bg-[var(--color-bg-primary)]/80 backdrop-blur-xl z-30">
                 {/* Left: Title with Status */}
                 <div className="flex items-center gap-3">
                     <div className={`w-1.5 h-1.5 rounded-full ${serverStatus === 'connected' ? 'bg-[var(--color-green)]' : 'bg-[var(--color-red)]'} shadow-[0_0_8px_currentColor] animate-pulse`}></div>
@@ -301,17 +301,17 @@ export const UnifiedValidator: React.FC = () => {
                 <main className="flex-1 flex flex-col min-w-0 transition-all duration-300">
                     <div className="flex-1 flex h-full">
                         {/* Input Panel */}
-                        <div className="flex-1 flex flex-col border-r border-[var(--color-border)] bg-[var(--color-bg-primary)]">
-                            {/* Panel Header */}
-                            <div className="h-12 flex items-center justify-between px-5 border-b border-[var(--color-border)] bg-[var(--color-bg-primary)]">
-                                <div className="flex items-center gap-2.5">
-                                    <div className="w-2 h-2 rounded-full bg-[var(--color-blue)]"></div>
-                                    <span className="text-[13px] font-semibold text-[var(--color-text-primary)]">Input YAML</span>
+                        <div className="flex-1 flex flex-col bg-[var(--color-bg-primary)]">
+                            {/* Panel Header - Borderless */}
+                            <div className="h-11 flex items-center justify-between px-4 bg-[var(--color-bg-secondary)]/40">
+                                <div className="flex items-center gap-2">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-[var(--color-blue)]"></div>
+                                    <span className="text-xs font-bold text-[var(--color-text-primary)]">Input YAML</span>
                                 </div>
                                 {inputYaml && (
                                     <button
                                         onClick={handleClear}
-                                        className="text-[12px] font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-red)] transition-colors px-2.5 py-1 rounded-md hover:bg-[var(--color-bg-secondary)]"
+                                        className="text-[11px] font-semibold text-[var(--color-text-secondary)] hover:text-[var(--color-red)] transition-colors px-2 py-1 rounded-full hover:bg-[var(--color-bg-primary)]/80"
                                     >
                                         Clear
                                     </button>
@@ -356,42 +356,40 @@ export const UnifiedValidator: React.FC = () => {
 
                         {/* Output Panel */}
                         <div className="flex-1 flex flex-col bg-[var(--color-bg-primary)]">
-                            {/* Panel Header */}
-                            <div className="h-12 flex items-center justify-between px-5 border-b border-[var(--color-border)] bg-[var(--color-bg-primary)]">
-                                <div className="flex items-center gap-3">
-                                    <div className="flex items-center gap-2.5">
-                                        <div className={`w-2 h-2 rounded-full ${outputYaml ? (isValid ? 'bg-[var(--color-green)]' : 'bg-[var(--color-orange)]') : 'bg-[var(--color-text-tertiary)]'}`}></div>
-                                        <span className="text-[13px] font-semibold text-[var(--color-text-primary)]">
-                                            {fixEnabled ? 'Fixed Output' : 'Validation Result'}
-                                        </span>
-                                    </div>
+                            {/* Panel Header - Borderless & Elegant */}
+                            <div className="h-11 flex items-center justify-between px-4 bg-[var(--color-bg-secondary)]/40">
+                                <div className="flex items-center gap-2">
+                                    <div className={`w-1.5 h-1.5 rounded-full ${outputYaml ? (isValid ? 'bg-[var(--color-green)]' : 'bg-[var(--color-orange)]') : 'bg-[var(--color-text-tertiary)]/50'}`}></div>
+                                    <span className="text-xs font-bold text-[var(--color-text-primary)]">
+                                        {fixEnabled ? 'Fixed Output' : 'Validation'}
+                                    </span>
                                 </div>
-                                <div className="flex items-center gap-2.5">
-                                    {/* Fix Toggle */}
-                                    <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-[var(--color-bg-secondary)] border border-[var(--color-border)]">
-                                        <span className="text-[11px] font-semibold text-[var(--color-text-secondary)]">Auto-Fix</span>
+                                <div className="flex items-center gap-1.5">
+                                    {/* Auto-Fix Toggle - Borderless Pill */}
+                                    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[var(--color-bg-primary)]/80">
+                                        <span className="text-[10px] font-semibold text-[var(--color-text-secondary)]">Auto-Fix</span>
                                         <div
-                                            className={`relative w-9 h-5 rounded-full transition-all cursor-pointer ${fixEnabled ? 'bg-[var(--color-green)]' : 'bg-[var(--color-border)]'}`}
+                                            className={`relative w-8 h-[18px] rounded-full transition-all cursor-pointer ${fixEnabled ? 'bg-[var(--color-green)]' : 'bg-[var(--color-text-tertiary)]/30'}`}
                                             onClick={() => setFixEnabled(!fixEnabled)}
                                         >
-                                            <div className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-transform duration-200 ${fixEnabled ? 'translate-x-4' : 'translate-x-0'}`} />
+                                            <div className={`absolute top-[3px] left-[3px] w-3 h-3 bg-white rounded-full shadow-sm transition-transform duration-200 ${fixEnabled ? 'translate-x-[14px]' : 'translate-x-0'}`} />
                                         </div>
                                     </div>
 
-                                    {/* Validate Button */}
+                                    {/* Validate Button - Clean Pill */}
                                     <button
                                         onClick={handleValidate}
                                         disabled={isValidating || !inputYaml.trim()}
-                                        className="flex items-center gap-2 bg-[var(--color-blue)] hover:bg-[var(--color-blue-dark)] text-white px-4 py-2 rounded-lg text-[12px] font-bold shadow-sm disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95"
+                                        className="flex items-center gap-1.5 bg-[var(--color-blue)] hover:bg-[var(--color-blue-dark)] text-white px-3.5 py-1.5 rounded-full text-[11px] font-bold disabled:opacity-40 disabled:cursor-not-allowed transition-all active:scale-95"
                                     >
                                         {isValidating ? (
                                             <>
-                                                <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                                <span>Validating...</span>
+                                                <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                                <span>Validating</span>
                                             </>
                                         ) : (
                                             <>
-                                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                                                 </svg>
                                                 <span>Validate</span>
@@ -399,24 +397,24 @@ export const UnifiedValidator: React.FC = () => {
                                         )}
                                     </button>
 
-                                    {/* Actions */}
+                                    {/* Actions - Borderless Icons */}
                                     {outputYaml && (
-                                        <div className="flex items-center border-l border-[var(--color-border)] pl-2.5 ml-1 gap-1">
+                                        <div className="flex items-center gap-0.5 ml-1">
                                             <button
                                                 onClick={handleCopy}
-                                                className="p-2 text-[var(--color-text-secondary)] hover:text-[var(--color-blue)] hover:bg-[var(--color-bg-secondary)] rounded-lg transition-colors"
+                                                className="p-1.5 text-[var(--color-text-secondary)] hover:text-[var(--color-blue)] hover:bg-[var(--color-bg-primary)]/80 rounded-full transition-colors"
                                                 title="Copy to clipboard"
                                             >
-                                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                                                 </svg>
                                             </button>
                                             <button
                                                 onClick={handleDownload}
-                                                className="p-2 text-[var(--color-text-secondary)] hover:text-[var(--color-blue)] hover:bg-[var(--color-bg-secondary)] rounded-lg transition-colors"
+                                                className="p-1.5 text-[var(--color-text-secondary)] hover:text-[var(--color-blue)] hover:bg-[var(--color-bg-primary)]/80 rounded-full transition-colors"
                                                 title="Download YAML"
                                             >
-                                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                                                 </svg>
                                             </button>
@@ -471,160 +469,162 @@ export const UnifiedValidator: React.FC = () => {
                 </main>
 
                 {/* Console Sidebar - Elegant & Minimal */}
-                {showConsole && (
-                    <aside className="w-[400px] flex-shrink-0 border-l border-[var(--color-border)]/10 bg-[var(--color-bg-primary)]/50 backdrop-blur-2xl flex flex-col animate-slide-in-right z-20">
-                        {/* Console Header */}
-                        <div className="h-12 flex items-center justify-between px-4 border-b border-[var(--color-border)]/10">
-                            <div className="flex items-center gap-2">
-                                <div className="w-6 h-6 rounded-md bg-[var(--color-blue)]/10 flex items-center justify-center">
-                                    <svg className="w-3.5 h-3.5 text-[var(--color-blue)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                    </svg>
+                {
+                    showConsole && (
+                        <aside className="w-[400px] flex-shrink-0 border-l border-[var(--color-border)]/10 bg-[var(--color-bg-primary)]/50 backdrop-blur-2xl flex flex-col animate-slide-in-right z-20">
+                            {/* Console Header */}
+                            <div className="h-12 flex items-center justify-between px-4 border-b border-[var(--color-border)]/10">
+                                <div className="flex items-center gap-2">
+                                    <div className="w-6 h-6 rounded-md bg-[var(--color-blue)]/10 flex items-center justify-center">
+                                        <svg className="w-3.5 h-3.5 text-[var(--color-blue)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                        </svg>
+                                    </div>
+                                    <h3 className="text-xs font-bold text-[var(--color-text-primary)]">Console</h3>
                                 </div>
-                                <h3 className="text-xs font-bold text-[var(--color-text-primary)]">Console</h3>
+                                <button
+                                    onClick={() => setShowConsole(false)}
+                                    className="p-1.5 rounded-md text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-secondary)]/40 transition-all"
+                                    title="Close Console"
+                                >
+                                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
                             </div>
-                            <button
-                                onClick={() => setShowConsole(false)}
-                                className="p-1.5 rounded-md text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-secondary)]/40 transition-all"
-                                title="Close Console"
-                            >
-                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                            </button>
-                        </div>
 
-                        {/* Tabs */}
-                        <div className="flex gap-0.5 p-1.5 border-b border-[var(--color-border)]/10">
-                            <button
-                                onClick={() => setConsoleTab('fixes')}
-                                className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-md text-xs font-semibold transition-all duration-200 ${consoleTab === 'fixes'
-                                    ? 'bg-[var(--color-bg-primary)]/70 text-[var(--color-text-primary)] shadow-sm'
-                                    : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-primary)]/30'
-                                    }`}
-                            >
-                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                </svg>
-                                <span>Fixes</span>
-                                {changes.length > 0 && (
-                                    <span className="flex items-center justify-center min-w-[18px] h-4 px-1 rounded-full bg-[var(--color-green)]/15 text-[var(--color-green)] text-[10px] font-bold">
-                                        {changes.length}
-                                    </span>
-                                )}
-                            </button>
-                            <button
-                                onClick={() => setConsoleTab('errors')}
-                                className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-md text-xs font-semibold transition-all duration-200 ${consoleTab === 'errors'
-                                    ? 'bg-[var(--color-bg-primary)]/70 text-[var(--color-text-primary)] shadow-sm'
-                                    : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-primary)]/30'
-                                    }`}
-                            >
-                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                                <span>Errors</span>
-                                {errors.length > 0 && (
-                                    <span className="flex items-center justify-center min-w-[18px] h-4 px-1 rounded-full bg-[var(--color-red)]/15 text-[var(--color-red)] text-[10px] font-bold">
-                                        {errors.length}
-                                    </span>
-                                )}
-                            </button>
-                        </div>
+                            {/* Tabs */}
+                            <div className="flex gap-0.5 p-1.5 border-b border-[var(--color-border)]/10">
+                                <button
+                                    onClick={() => setConsoleTab('fixes')}
+                                    className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-md text-xs font-semibold transition-all duration-200 ${consoleTab === 'fixes'
+                                        ? 'bg-[var(--color-bg-primary)]/70 text-[var(--color-text-primary)] shadow-sm'
+                                        : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-primary)]/30'
+                                        }`}
+                                >
+                                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                    </svg>
+                                    <span>Fixes</span>
+                                    {changes.length > 0 && (
+                                        <span className="flex items-center justify-center min-w-[18px] h-4 px-1 rounded-full bg-[var(--color-green)]/15 text-[var(--color-green)] text-[10px] font-bold">
+                                            {changes.length}
+                                        </span>
+                                    )}
+                                </button>
+                                <button
+                                    onClick={() => setConsoleTab('errors')}
+                                    className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-md text-xs font-semibold transition-all duration-200 ${consoleTab === 'errors'
+                                        ? 'bg-[var(--color-bg-primary)]/70 text-[var(--color-text-primary)] shadow-sm'
+                                        : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-primary)]/30'
+                                        }`}
+                                >
+                                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    <span>Errors</span>
+                                    {errors.length > 0 && (
+                                        <span className="flex items-center justify-center min-w-[18px] h-4 px-1 rounded-full bg-[var(--color-red)]/15 text-[var(--color-red)] text-[10px] font-bold">
+                                            {errors.length}
+                                        </span>
+                                    )}
+                                </button>
+                            </div>
 
-                        {/* Content */}
-                        <div className="flex-1 overflow-y-auto p-3 space-y-2.5">
-                            {consoleTab === 'fixes' ? (
-                                changes.length > 0 ? (
-                                    changes.map((change, idx) => (
-                                        <div key={idx} className="bg-[var(--color-bg-primary)]/50 backdrop-blur-sm rounded-lg border border-[var(--color-border)]/10 p-3 hover:border-[var(--color-green)]/20 hover:bg-[var(--color-bg-primary)]/60 transition-all duration-200">
-                                            <div className="flex items-start gap-2.5">
-                                                <div className="w-6 h-6 rounded-md bg-gradient-to-br from-[var(--color-green)]/15 to-[var(--color-green)]/5 text-[var(--color-green)] flex items-center justify-center text-[10px] font-bold flex-shrink-0">
-                                                    {change.line}
-                                                </div>
-                                                <div className="flex-1 min-w-0">
-                                                    <div className="flex items-center justify-between mb-2">
-                                                        <span className="text-[9px] font-bold uppercase text-[var(--color-green)] tracking-wider px-1.5 py-0.5 rounded bg-[var(--color-green)]/8">
-                                                            {change.type}
-                                                        </span>
+                            {/* Content */}
+                            <div className="flex-1 overflow-y-auto p-3 space-y-2.5">
+                                {consoleTab === 'fixes' ? (
+                                    changes.length > 0 ? (
+                                        changes.map((change, idx) => (
+                                            <div key={idx} className="bg-[var(--color-bg-primary)]/50 backdrop-blur-sm rounded-lg border border-[var(--color-border)]/10 p-3 hover:border-[var(--color-green)]/20 hover:bg-[var(--color-bg-primary)]/60 transition-all duration-200">
+                                                <div className="flex items-start gap-2.5">
+                                                    <div className="w-6 h-6 rounded-md bg-gradient-to-br from-[var(--color-green)]/15 to-[var(--color-green)]/5 text-[var(--color-green)] flex items-center justify-center text-[10px] font-bold flex-shrink-0">
+                                                        {change.line}
                                                     </div>
-                                                    <p className="text-xs text-[var(--color-text-primary)] mb-2.5 leading-relaxed break-words font-medium">
-                                                        {change.reason}
-                                                    </p>
-                                                    <div className="space-y-2">
-                                                        <div>
-                                                            <div className="text-[9px] font-bold text-[var(--color-text-tertiary)] mb-1 uppercase tracking-wide">Before:</div>
-                                                            <code className="block text-[10px] font-mono bg-[var(--color-red)]/5 text-[var(--color-red)] px-2 py-1.5 rounded border border-[var(--color-red)]/10 break-all leading-relaxed">
-                                                                {change.original}
-                                                            </code>
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="flex items-center justify-between mb-2">
+                                                            <span className="text-[9px] font-bold uppercase text-[var(--color-green)] tracking-wider px-1.5 py-0.5 rounded bg-[var(--color-green)]/8">
+                                                                {change.type}
+                                                            </span>
                                                         </div>
-                                                        <div>
-                                                            <div className="text-[9px] font-bold text-[var(--color-text-tertiary)] mb-1 uppercase tracking-wide">After:</div>
-                                                            <code className="block text-[10px] font-mono bg-[var(--color-green)]/5 text-[var(--color-green)] px-2 py-1.5 rounded border border-[var(--color-green)]/10 break-all leading-relaxed">
-                                                                {change.fixed}
-                                                            </code>
+                                                        <p className="text-xs text-[var(--color-text-primary)] mb-2.5 leading-relaxed break-words font-medium">
+                                                            {change.reason}
+                                                        </p>
+                                                        <div className="space-y-2">
+                                                            <div>
+                                                                <div className="text-[9px] font-bold text-[var(--color-text-tertiary)] mb-1 uppercase tracking-wide">Before:</div>
+                                                                <code className="block text-[10px] font-mono bg-[var(--color-red)]/5 text-[var(--color-red)] px-2 py-1.5 rounded border border-[var(--color-red)]/10 break-all leading-relaxed">
+                                                                    {change.original}
+                                                                </code>
+                                                            </div>
+                                                            <div>
+                                                                <div className="text-[9px] font-bold text-[var(--color-text-tertiary)] mb-1 uppercase tracking-wide">After:</div>
+                                                                <code className="block text-[10px] font-mono bg-[var(--color-green)]/5 text-[var(--color-green)] px-2 py-1.5 rounded border border-[var(--color-green)]/10 break-all leading-relaxed">
+                                                                    {change.fixed}
+                                                                </code>
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>
                                             </div>
+                                        ))
+                                    ) : (
+                                        <div className="flex flex-col items-center justify-center h-48 text-[var(--color-text-tertiary)]">
+                                            <svg className="w-12 h-12 mb-3 opacity-20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 13l4 4L19 7" />
+                                            </svg>
+                                            <p className="text-[13px] font-medium">No fixes applied</p>
                                         </div>
-                                    ))
+                                    )
                                 ) : (
-                                    <div className="flex flex-col items-center justify-center h-48 text-[var(--color-text-tertiary)]">
-                                        <svg className="w-12 h-12 mb-3 opacity-20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 13l4 4L19 7" />
-                                        </svg>
-                                        <p className="text-[13px] font-medium">No fixes applied</p>
-                                    </div>
-                                )
-                            ) : (
-                                errors.length > 0 ? (
-                                    Object.entries(groupedErrors).map(([severity, severityErrors]) => (
-                                        <div key={severity} className="space-y-2">
-                                            <h4 className="text-[10px] font-bold uppercase tracking-wider text-[var(--color-text-tertiary)] px-1 mb-2">
-                                                {severity} ({severityErrors.length})
-                                            </h4>
-                                            {severityErrors.map((error, idx) => (
-                                                <div key={idx} className={`bg-[var(--color-bg-primary)]/50 backdrop-blur-sm rounded-lg border-l-2 border-r border-t border-b p-3 hover:bg-[var(--color-bg-primary)]/60 transition-all duration-200 ${severity === 'critical' || severity === 'error' ? 'border-l-[var(--color-red)] border-r-[var(--color-border)]/10 border-t-[var(--color-border)]/10 border-b-[var(--color-border)]/10' :
-                                                    severity === 'warning' ? 'border-l-[var(--color-orange)] border-r-[var(--color-border)]/10 border-t-[var(--color-border)]/10 border-b-[var(--color-border)]/10' : 'border-l-[var(--color-blue)] border-r-[var(--color-border)]/10 border-t-[var(--color-border)]/10 border-b-[var(--color-border)]/10'
-                                                    }`}>
-                                                    <div className="flex items-start gap-2.5">
-                                                        <div className="flex-1 min-w-0">
-                                                            <div className="flex items-center gap-2 mb-2">
-                                                                <span className="text-[9px] font-mono bg-[var(--color-bg-secondary)]/40 px-2 py-0.5 rounded text-[var(--color-text-secondary)] font-bold">
-                                                                    Line {error.line}
-                                                                </span>
-                                                                {error.code && (
-                                                                    <span className="text-[9px] font-mono text-[var(--color-text-tertiary)] font-semibold">
-                                                                        {error.code}
+                                    errors.length > 0 ? (
+                                        Object.entries(groupedErrors).map(([severity, severityErrors]) => (
+                                            <div key={severity} className="space-y-2">
+                                                <h4 className="text-[10px] font-bold uppercase tracking-wider text-[var(--color-text-tertiary)] px-1 mb-2">
+                                                    {severity} ({severityErrors.length})
+                                                </h4>
+                                                {severityErrors.map((error, idx) => (
+                                                    <div key={idx} className={`bg-[var(--color-bg-primary)]/50 backdrop-blur-sm rounded-lg border-l-2 border-r border-t border-b p-3 hover:bg-[var(--color-bg-primary)]/60 transition-all duration-200 ${severity === 'critical' || severity === 'error' ? 'border-l-[var(--color-red)] border-r-[var(--color-border)]/10 border-t-[var(--color-border)]/10 border-b-[var(--color-border)]/10' :
+                                                        severity === 'warning' ? 'border-l-[var(--color-orange)] border-r-[var(--color-border)]/10 border-t-[var(--color-border)]/10 border-b-[var(--color-border)]/10' : 'border-l-[var(--color-blue)] border-r-[var(--color-border)]/10 border-t-[var(--color-border)]/10 border-b-[var(--color-border)]/10'
+                                                        }`}>
+                                                        <div className="flex items-start gap-2.5">
+                                                            <div className="flex-1 min-w-0">
+                                                                <div className="flex items-center gap-2 mb-2">
+                                                                    <span className="text-[9px] font-mono bg-[var(--color-bg-secondary)]/40 px-2 py-0.5 rounded text-[var(--color-text-secondary)] font-bold">
+                                                                        Line {error.line}
                                                                     </span>
-                                                                )}
+                                                                    {error.code && (
+                                                                        <span className="text-[9px] font-mono text-[var(--color-text-tertiary)] font-semibold">
+                                                                            {error.code}
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                                <p className="text-xs font-medium text-[var(--color-text-primary)] leading-relaxed break-words">
+                                                                    {error.message}
+                                                                </p>
                                                             </div>
-                                                            <p className="text-xs font-medium text-[var(--color-text-primary)] leading-relaxed break-words">
-                                                                {error.message}
-                                                            </p>
                                                         </div>
                                                     </div>
-                                                </div>
-                                            ))}
+                                                ))}
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <div className="flex flex-col items-center justify-center h-48 text-[var(--color-text-tertiary)]">
+                                            <svg className="w-12 h-12 mb-3 opacity-20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                            <p className="text-[13px] font-medium">No errors found</p>
                                         </div>
-                                    ))
-                                ) : (
-                                    <div className="flex flex-col items-center justify-center h-48 text-[var(--color-text-tertiary)]">
-                                        <svg className="w-12 h-12 mb-3 opacity-20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                        </svg>
-                                        <p className="text-[13px] font-medium">No errors found</p>
-                                    </div>
-                                )
-                            )}
-                        </div>
-                    </aside>
-                )}
-            </div>
+                                    )
+                                )}
+                            </div>
+                        </aside>
+                    )
+                }
+            </div >
 
             {/* Footer - Status Bar */}
-            <footer className="h-[32px] flex-shrink-0 flex items-center justify-between px-6 border-t border-[var(--color-border-light)] bg-[var(--color-bg-primary)] text-[11px] text-[var(--color-text-secondary)]">
+            < footer className="h-[32px] flex-shrink-0 flex items-center justify-between px-6 border-t border-[var(--color-border-light)] bg-[var(--color-bg-primary)] text-[11px] text-[var(--color-text-secondary)]" >
                 <div className="flex items-center gap-4">
                     <div className="flex items-center gap-2">
                         <div className={`w-1.5 h-1.5 rounded-full ${serverStatus === 'connected' ? 'bg-[var(--color-green)]' : 'bg-[var(--color-red)]'}`}></div>
@@ -636,24 +636,26 @@ export const UnifiedValidator: React.FC = () => {
                     <span className="text-[var(--color-border)]">|</span>
                     <span>Validator Engine v1.5.0</span>
                 </div>
-            </footer>
+            </footer >
 
             {/* Documentation Overlay - Full Screen */}
-            {showDocumentation && (
-                <div className="fixed inset-0 z-50 bg-[var(--color-bg-primary)] animate-fade-in">
-                    <div className="absolute top-4 right-4 z-50">
-                        <button
-                            onClick={() => setShowDocumentation(false)}
-                            className="p-2 rounded-full bg-[var(--color-bg-secondary)] hover:bg-[var(--color-bg-tertiary)] text-[var(--color-text-primary)] shadow-md transition-all hover:scale-105"
-                        >
-                            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                        </button>
+            {
+                showDocumentation && (
+                    <div className="fixed inset-0 z-50 bg-[var(--color-bg-primary)] animate-fade-in">
+                        <div className="absolute top-4 right-4 z-50">
+                            <button
+                                onClick={() => setShowDocumentation(false)}
+                                className="p-2 rounded-full bg-[var(--color-bg-secondary)] hover:bg-[var(--color-bg-tertiary)] text-[var(--color-text-primary)] shadow-md transition-all hover:scale-105"
+                            >
+                                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+                        <Documentation />
                     </div>
-                    <Documentation />
-                </div>
-            )}
+                )
+            }
 
             {/* Toast Notifications */}
             <div className="fixed top-20 right-6 z-[100] space-y-2 pointer-events-none">
@@ -673,29 +675,31 @@ export const UnifiedValidator: React.FC = () => {
             </div>
 
             {/* Confetti */}
-            {showConfetti && (
-                <div className="fixed inset-0 pointer-events-none z-[200]">
-                    {[...Array(20)].map((_, i) => (
-                        <div
-                            key={i}
-                            className="absolute"
-                            style={{
-                                left: `${Math.random() * 100}%`,
-                                top: '-10px',
-                                animation: `confetti-fall ${2 + Math.random()}s linear forwards`,
-                                animationDelay: `${Math.random() * 0.5}s`,
-                            }}
-                        >
+            {
+                showConfetti && (
+                    <div className="fixed inset-0 pointer-events-none z-[200]">
+                        {[...Array(20)].map((_, i) => (
                             <div
-                                className="w-2 h-2 rounded-full"
+                                key={i}
+                                className="absolute"
                                 style={{
-                                    backgroundColor: ['#34C759', '#30D158', '#007AFF', '#0A84FF'][Math.floor(Math.random() * 4)],
+                                    left: `${Math.random() * 100}%`,
+                                    top: '-10px',
+                                    animation: `confetti-fall ${2 + Math.random()}s linear forwards`,
+                                    animationDelay: `${Math.random() * 0.5}s`,
                                 }}
-                            />
-                        </div>
-                    ))}
-                </div>
-            )}
-        </div>
+                            >
+                                <div
+                                    className="w-2 h-2 rounded-full"
+                                    style={{
+                                        backgroundColor: ['#34C759', '#30D158', '#007AFF', '#0A84FF'][Math.floor(Math.random() * 4)],
+                                    }}
+                                />
+                            </div>
+                        ))}
+                    </div>
+                )
+            }
+        </div >
     );
 };
