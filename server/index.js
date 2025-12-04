@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import bodyParser from 'body-parser';
 import yaml from 'js-yaml';
-import yamlFixerRouter from './routes/yaml-fixer.js';
+import validateRouter from './routes/validate.js';
 
 const app = express();
 const PORT = 3001;
@@ -11,8 +11,8 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.text({ type: 'application/x-yaml' }));
 
-// YAML Fixer API Routes
-app.use('/api/yaml', yamlFixerRouter);
+// YAML Validator API Routes
+app.use('/api/yaml', validateRouter);
 
 
 // Helper: Check if a value exists

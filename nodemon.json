@@ -1,12 +1,12 @@
 {
     "watch": [
-        "server"
+        "server",
+        "src"
     ],
-    "ext": "js,json",
+    "ext": "js,json,ts",
     "ignore": [
-        "src",
         "dist",
         "node_modules"
     ],
-    "exec": "node server/index.js"
+    "exec": "tsx server/index.js"
 }
