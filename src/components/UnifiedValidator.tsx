@@ -232,15 +232,15 @@ export const UnifiedValidator: React.FC = () => {
     }, {} as Record<string, ValidationError[]>);
 
     return (
-        <div className="h-screen flex flex-col bg-gradient-to-br from-[var(--color-bg-primary)] to-[var(--color-bg-secondary)] overflow-hidden font-sans" data-theme={theme}>
+        <div className="h-screen flex flex-col bg-gradient-to-br from-[var(--color-bg-primary)] to-[var(--color-bg-secondary)] overflow-hidden font-sans animate-fade-in-soft" data-theme={theme}>
             {/* Header Bar - Clean & Borderless */}
-            <header className="h-14 flex-shrink-0 flex items-center justify-between px-5 bg-[var(--color-bg-primary)]/80 backdrop-blur-xl z-30">
-                {/* Left: Title with Status */}
-                <div className="flex items-center gap-3">
-                    <div className={`w-1.5 h-1.5 rounded-full ${serverStatus === 'connected' ? 'bg-[var(--color-green)]' : 'bg-[var(--color-red)]'} shadow-[0_0_8px_currentColor] animate-pulse`}></div>
-                    <h1 className="text-base font-bold tracking-tight text-[var(--color-text-primary)]">
-                        YAML Validator
-                    </h1>
+            <header className="h-14 flex-shrink-0 flex items-center justify-between px-5 bg-[var(--color-bg-primary)]/80 backdrop-blur-xl z-30 animate-slide-down">
+                {/* Left: Brand (logo + name) - refined and centered vertically */}
+                <div className="flex items-center gap-0">
+                    <div className="leading-tight">
+                        <h1 className="text-lg md:text-xl font-extrabold tracking-tight text-[var(--color-text-primary)]">Podscribe</h1>
+                        <div className="text-[11px] text-[var(--color-text-tertiary)] -mt-0.5">Kubernetes YAML Linter</div>
+                    </div>
                 </div>
 
                 {/* Right: Actions */}
@@ -248,7 +248,7 @@ export const UnifiedValidator: React.FC = () => {
                     {/* Console Toggle */}
                     <button
                         onClick={() => setShowConsole(!showConsole)}
-                        className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 ${showConsole
+                        className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 btn-press ${showConsole
                             ? 'bg-[var(--color-blue)] text-white shadow-sm'
                             : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-secondary)]/60'
                             }`}
@@ -268,7 +268,7 @@ export const UnifiedValidator: React.FC = () => {
                     {/* Documentation */}
                     <button
                         onClick={() => setShowDocumentation(true)}
-                        className="p-2 rounded-lg text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-secondary)]/60 transition-all"
+                        className="p-2 rounded-lg text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-secondary)]/60 transition-all btn-press btn-hover"
                         title="Documentation"
                     >
                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -279,7 +279,7 @@ export const UnifiedValidator: React.FC = () => {
                     {/* Theme Toggle */}
                     <button
                         onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
-                        className="p-2 rounded-lg text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-secondary)]/60 transition-all"
+                        className="p-2 rounded-lg text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-secondary)]/60 transition-all btn-press btn-hover"
                         title="Toggle Theme"
                     >
                         {theme === 'light' ? (
@@ -301,7 +301,7 @@ export const UnifiedValidator: React.FC = () => {
                 <main className="flex-1 flex flex-col min-w-0 transition-all duration-300">
                     <div className="flex-1 flex h-full">
                         {/* Input Panel */}
-                        <div className="flex-1 flex flex-col bg-[var(--color-bg-primary)]">
+                        <div className="flex-1 flex flex-col bg-[var(--color-bg-primary)] animate-slide-up" style={{ animationDelay: '100ms' }}>
                             {/* Panel Header - Borderless */}
                             <div className="h-11 flex items-center justify-between px-4 bg-[var(--color-bg-secondary)]/40">
                                 <div className="flex items-center gap-2">
@@ -311,7 +311,7 @@ export const UnifiedValidator: React.FC = () => {
                                 {inputYaml && (
                                     <button
                                         onClick={handleClear}
-                                        className="text-[11px] font-semibold text-[var(--color-text-secondary)] hover:text-[var(--color-red)] transition-colors px-2 py-1 rounded-full hover:bg-[var(--color-bg-primary)]/80"
+                                        className="text-[11px] font-semibold text-[var(--color-text-secondary)] hover:text-[var(--color-red)] transition-colors px-2 py-1 rounded-full hover:bg-[var(--color-bg-primary)]/80 btn-press"
                                     >
                                         Clear
                                     </button>
@@ -355,7 +355,7 @@ export const UnifiedValidator: React.FC = () => {
                         </div>
 
                         {/* Output Panel */}
-                        <div className="flex-1 flex flex-col bg-[var(--color-bg-primary)]">
+                        <div className="flex-1 flex flex-col bg-[var(--color-bg-primary)] animate-slide-up" style={{ animationDelay: '200ms' }}>
                             {/* Panel Header - Borderless & Elegant */}
                             <div className="h-11 flex items-center justify-between px-4 bg-[var(--color-bg-secondary)]/40">
                                 <div className="flex items-center gap-2">
@@ -369,7 +369,7 @@ export const UnifiedValidator: React.FC = () => {
                                     <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[var(--color-bg-primary)]/80">
                                         <span className="text-[10px] font-semibold text-[var(--color-text-secondary)]">Auto-Fix</span>
                                         <div
-                                            className={`relative w-8 h-[18px] rounded-full transition-all cursor-pointer ${fixEnabled ? 'bg-[var(--color-green)]' : 'bg-[var(--color-text-tertiary)]/30'}`}
+                                            className={`relative w-8 h-[18px] rounded-full transition-all cursor-pointer btn-press ${fixEnabled ? 'bg-[var(--color-green)]' : 'bg-[var(--color-text-tertiary)]/30'}`}
                                             onClick={() => setFixEnabled(!fixEnabled)}
                                         >
                                             <div className={`absolute top-[3px] left-[3px] w-3 h-3 bg-white rounded-full shadow-sm transition-transform duration-200 ${fixEnabled ? 'translate-x-[14px]' : 'translate-x-0'}`} />
@@ -380,7 +380,7 @@ export const UnifiedValidator: React.FC = () => {
                                     <button
                                         onClick={handleValidate}
                                         disabled={isValidating || !inputYaml.trim()}
-                                        className="flex items-center gap-1.5 bg-[var(--color-blue)] hover:bg-[var(--color-blue-dark)] text-white px-3.5 py-1.5 rounded-full text-[11px] font-bold disabled:opacity-40 disabled:cursor-not-allowed transition-all active:scale-95"
+                                        className="flex items-center gap-1.5 bg-[var(--color-blue)] hover:bg-[var(--color-blue-dark)] text-white px-3.5 py-1.5 rounded-full text-[11px] font-bold disabled:opacity-40 disabled:cursor-not-allowed transition-all active:scale-95 btn-hover"
                                     >
                                         {isValidating ? (
                                             <>
@@ -402,7 +402,7 @@ export const UnifiedValidator: React.FC = () => {
                                         <div className="flex items-center gap-0.5 ml-1">
                                             <button
                                                 onClick={handleCopy}
-                                                className="p-1.5 text-[var(--color-text-secondary)] hover:text-[var(--color-blue)] hover:bg-[var(--color-bg-primary)]/80 rounded-full transition-colors"
+                                                className="p-1.5 text-[var(--color-text-secondary)] hover:text-[var(--color-blue)] hover:bg-[var(--color-bg-primary)]/80 rounded-full transition-colors btn-press btn-hover"
                                                 title="Copy to clipboard"
                                             >
                                                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -411,7 +411,7 @@ export const UnifiedValidator: React.FC = () => {
                                             </button>
                                             <button
                                                 onClick={handleDownload}
-                                                className="p-1.5 text-[var(--color-text-secondary)] hover:text-[var(--color-blue)] hover:bg-[var(--color-bg-primary)]/80 rounded-full transition-colors"
+                                                className="p-1.5 text-[var(--color-text-secondary)] hover:text-[var(--color-blue)] hover:bg-[var(--color-bg-primary)]/80 rounded-full transition-colors btn-press btn-hover"
                                                 title="Download YAML"
                                             >
                                                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -484,7 +484,7 @@ export const UnifiedValidator: React.FC = () => {
                                 </div>
                                 <button
                                     onClick={() => setShowConsole(false)}
-                                    className="w-6 h-6 rounded-md flex items-center justify-center text-[var(--color-text-tertiary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-secondary)]/50 transition-all"
+                                    className="w-6 h-6 rounded-md flex items-center justify-center text-[var(--color-text-tertiary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-secondary)]/50 transition-all btn-press btn-hover"
                                     title="Close"
                                 >
                                     <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -498,7 +498,7 @@ export const UnifiedValidator: React.FC = () => {
                                 <div className="flex p-0.5 rounded-lg bg-[var(--color-bg-secondary)]/50">
                                     <button
                                         onClick={() => setConsoleTab('fixes')}
-                                        className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-md text-[11px] font-bold transition-all duration-150 ${consoleTab === 'fixes'
+                                        className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-md text-[11px] font-bold transition-all duration-150 btn-press ${consoleTab === 'fixes'
                                             ? 'bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] shadow-sm'
                                             : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'
                                             }`}
@@ -515,7 +515,7 @@ export const UnifiedValidator: React.FC = () => {
                                     </button>
                                     <button
                                         onClick={() => setConsoleTab('errors')}
-                                        className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-md text-[11px] font-bold transition-all duration-150 ${consoleTab === 'errors'
+                                        className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-md text-[11px] font-bold transition-all duration-150 btn-press ${consoleTab === 'errors'
                                             ? 'bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] shadow-sm'
                                             : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'
                                             }`}
@@ -538,7 +538,11 @@ export const UnifiedValidator: React.FC = () => {
                                 {consoleTab === 'fixes' ? (
                                     changes.length > 0 ? (
                                         changes.map((change, idx) => (
-                                            <div key={idx} className="bg-[var(--color-bg-secondary)]/40 rounded-lg p-3 hover:bg-[var(--color-bg-secondary)]/60 transition-all">
+                                            <div
+                                                key={idx}
+                                                className="bg-[var(--color-bg-secondary)]/40 rounded-lg p-3 hover:bg-[var(--color-bg-secondary)]/60 transition-all animate-fade-in-soft"
+                                                style={{ animationDelay: `${idx * 50}ms` }}
+                                            >
                                                 <div className="flex items-start gap-2.5">
                                                     {/* Line Number */}
                                                     <div className="w-7 h-7 rounded-md bg-[var(--color-green)]/15 text-[var(--color-green)] flex items-center justify-center text-[10px] font-bold flex-shrink-0">
@@ -573,7 +577,7 @@ export const UnifiedValidator: React.FC = () => {
                                             </div>
                                         ))
                                     ) : (
-                                        <div className="flex flex-col items-center justify-center h-40 text-[var(--color-text-tertiary)]">
+                                        <div className="flex flex-col items-center justify-center h-40 text-[var(--color-text-tertiary)] animate-fade-in-soft">
                                             <div className="w-12 h-12 rounded-xl bg-[var(--color-bg-secondary)]/50 flex items-center justify-center mb-3">
                                                 <svg className="w-6 h-6 opacity-40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 13l4 4L19 7" />
@@ -585,8 +589,8 @@ export const UnifiedValidator: React.FC = () => {
                                     )
                                 ) : (
                                     errors.length > 0 ? (
-                                        Object.entries(groupedErrors).map(([severity, severityErrors]) => (
-                                            <div key={severity} className="space-y-1.5">
+                                        Object.entries(groupedErrors).map(([severity, severityErrors], groupIdx) => (
+                                            <div key={severity} className="space-y-1.5 animate-fade-in-soft" style={{ animationDelay: `${groupIdx * 100}ms` }}>
                                                 <div className="flex items-center gap-1.5 px-0.5 py-1">
                                                     <span className={`w-1.5 h-1.5 rounded-full ${severity === 'critical' || severity === 'error' ? 'bg-[var(--color-red)]' : severity === 'warning' ? 'bg-[var(--color-orange)]' : 'bg-[var(--color-blue)]'}`}></span>
                                                     <span className="text-[9px] font-bold uppercase tracking-wide text-[var(--color-text-tertiary)]">
@@ -594,9 +598,12 @@ export const UnifiedValidator: React.FC = () => {
                                                     </span>
                                                 </div>
                                                 {severityErrors.map((error, idx) => (
-                                                    <div key={idx} className={`bg-[var(--color-bg-secondary)]/40 rounded-lg p-3 hover:bg-[var(--color-bg-secondary)]/60 transition-all border-l-[3px] ${severity === 'critical' || severity === 'error' ? 'border-l-[var(--color-red)]' :
-                                                        severity === 'warning' ? 'border-l-[var(--color-orange)]' : 'border-l-[var(--color-blue)]'
-                                                        }`}>
+                                                    <div
+                                                        key={idx}
+                                                        className={`bg-[var(--color-bg-secondary)]/40 rounded-lg p-3 hover:bg-[var(--color-bg-secondary)]/60 transition-all border-l-[3px] ${severity === 'critical' || severity === 'error' ? 'border-l-[var(--color-red)]' :
+                                                            severity === 'warning' ? 'border-l-[var(--color-orange)]' : 'border-l-[var(--color-blue)]'
+                                                            }`}
+                                                    >
                                                         <div className="flex items-center gap-1.5 mb-1.5">
                                                             <span className="text-[9px] font-mono bg-[var(--color-bg-primary)]/50 px-1.5 py-0.5 rounded text-[var(--color-text-secondary)] font-bold">
                                                                 L{error.line}
@@ -615,7 +622,7 @@ export const UnifiedValidator: React.FC = () => {
                                             </div>
                                         ))
                                     ) : (
-                                        <div className="flex flex-col items-center justify-center h-40 text-[var(--color-text-tertiary)]">
+                                        <div className="flex flex-col items-center justify-center h-40 text-[var(--color-text-tertiary)] animate-fade-in-soft">
                                             <div className="w-12 h-12 rounded-xl bg-[var(--color-bg-secondary)]/50 flex items-center justify-center mb-3">
                                                 <svg className="w-6 h-6 opacity-40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -654,7 +661,7 @@ export const UnifiedValidator: React.FC = () => {
                         <div className="absolute top-4 right-4 z-50">
                             <button
                                 onClick={() => setShowDocumentation(false)}
-                                className="p-2 rounded-full bg-[var(--color-bg-secondary)] hover:bg-[var(--color-bg-tertiary)] text-[var(--color-text-primary)] shadow-md transition-all hover:scale-105"
+                                className="p-2 rounded-full bg-[var(--color-bg-secondary)] hover:bg-[var(--color-bg-tertiary)] text-[var(--color-text-primary)] shadow-md transition-all hover:scale-105 btn-press"
                             >
                                 <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />

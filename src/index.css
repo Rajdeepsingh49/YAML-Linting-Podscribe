@@ -200,11 +200,11 @@ body {
   border-radius: inherit;
 }
 
-/* Animations */
+/* Animations - Soft & Elegant */
 @keyframes fadeIn {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(8px);
   }
 
   to {
@@ -213,10 +213,20 @@ body {
   }
 }
 
+@keyframes fadeInSoft {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
 @keyframes scaleIn {
   from {
     opacity: 0;
-    transform: scale(0.9);
+    transform: scale(0.95);
   }
 
   to {
@@ -228,7 +238,19 @@ body {
 @keyframes slideUp {
   from {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(16px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-16px);
   }
 
   to {
@@ -240,7 +262,19 @@ body {
 @keyframes slideInRight {
   from {
     opacity: 0;
-    transform: translateX(20px);
+    transform: translateX(16px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-16px);
   }
 
   to {
@@ -257,11 +291,11 @@ body {
   }
 
   25% {
-    transform: translateX(-3px);
+    transform: translateX(-2px);
   }
 
   75% {
-    transform: translateX(3px);
+    transform: translateX(2px);
   }
 }
 
@@ -273,7 +307,7 @@ body {
   }
 
   50% {
-    transform: scale(1.1);
+    transform: scale(1.05);
   }
 }
 
@@ -285,13 +319,61 @@ body {
   }
 
   50% {
-    opacity: 0.6;
+    opacity: 0.5;
+  }
+}
+
+@keyframes glow {
+
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(0, 122, 255, 0);
+  }
+
+  50% {
+    box-shadow: 0 0 12px 2px rgba(0, 122, 255, 0.3);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+
+  100% {
+    background-position: 200% 0;
   }
 }
 
 @keyframes spin {
   to {
     transform: rotate(360deg);
+  }
+}
+
+@keyframes float {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes breathe {
+
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+
+  50% {
+    transform: scale(1.02);
+    opacity: 0.9;
   }
 }
 
@@ -302,21 +384,33 @@ body {
   }
 }
 
-/* Animation Classes */
+/* Animation Classes - Soft Easing */
 .animate-fade-in {
-  animation: fadeIn var(--transition-base) ease-out;
+  animation: fadeIn 300ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.animate-fade-in-soft {
+  animation: fadeInSoft 400ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
 .animate-scale-in {
-  animation: scaleIn var(--transition-base) ease-out;
+  animation: scaleIn 250ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
 
 .animate-slide-up {
-  animation: slideUp var(--transition-base) ease-out;
+  animation: slideUp 350ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.animate-slide-down {
+  animation: slideDown 350ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
 .animate-slide-in-right {
-  animation: slideInRight var(--transition-slow) ease-out;
+  animation: slideInRight 300ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.animate-slide-in-left {
+  animation: slideInLeft 300ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
 .animate-shake {

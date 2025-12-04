@@ -99,7 +99,7 @@ export const LinterOutput: React.FC<LinterOutputProps> = ({
                             {hasIndentationErrors && onFixIndentation && (
                                 <button
                                     onClick={onFixIndentation}
-                                    className="px-3 py-1.5 text-xs font-medium text-[var(--color-text-primary)] bg-[var(--color-bg-secondary)] hover:bg-[var(--color-border)] border border-[var(--color-border)] rounded-md transition-all flex items-center gap-1.5"
+                                    className="px-3 py-1.5 text-xs font-medium text-[var(--color-text-primary)] bg-[var(--color-bg-secondary)] hover:bg-[var(--color-border)] border border-[var(--color-border)] rounded-md transition-all flex items-center gap-1.5 btn-press btn-hover"
                                 >
                                     <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-blue)]"></span>
                                     Fix Indentation
@@ -108,7 +108,7 @@ export const LinterOutput: React.FC<LinterOutputProps> = ({
                             {onFixSyntax && (
                                 <button
                                     onClick={onFixSyntax}
-                                    className="px-3 py-1.5 text-xs font-medium text-[var(--color-text-primary)] bg-[var(--color-bg-secondary)] hover:bg-[var(--color-border)] border border-[var(--color-border)] rounded-md transition-all flex items-center gap-1.5"
+                                    className="px-3 py-1.5 text-xs font-medium text-[var(--color-text-primary)] bg-[var(--color-bg-secondary)] hover:bg-[var(--color-border)] border border-[var(--color-border)] rounded-md transition-all flex items-center gap-1.5 btn-press btn-hover"
                                 >
                                     <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-purple)]"></span>
                                     Fix Syntax
@@ -123,8 +123,8 @@ export const LinterOutput: React.FC<LinterOutputProps> = ({
             <div className="flex-1 overflow-y-auto p-6 space-y-8">
                 {/* Success State */}
                 {totalIssues === 0 && isValid && (
-                    <div className="flex flex-col items-center justify-center h-full text-center opacity-0 animate-fade-in" style={{ animationFillMode: 'forwards' }}>
-                        <div className="w-16 h-16 bg-gradient-to-br from-[var(--color-green)]/20 to-[var(--color-green)]/5 rounded-2xl flex items-center justify-center mb-4 shadow-sm border border-[var(--color-green)]/20">
+                    <div className="flex flex-col items-center justify-center h-full text-center opacity-0 animate-fade-in-soft" style={{ animationFillMode: 'forwards' }}>
+                        <div className="w-16 h-16 bg-gradient-to-br from-[var(--color-green)]/20 to-[var(--color-green)]/5 rounded-2xl flex items-center justify-center mb-4 shadow-sm border border-[var(--color-green)]/20 animate-scale-in">
                             <svg className="w-8 h-8 text-[var(--color-green)]" viewBox="0 0 20 20" fill="currentColor">
                                 <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                             </svg>
@@ -140,7 +140,7 @@ export const LinterOutput: React.FC<LinterOutputProps> = ({
 
                 {/* Indentation Errors */}
                 {hasIndentationErrors && (
-                    <section className="space-y-3">
+                    <section className="space-y-3 animate-fade-in-soft" style={{ animationDelay: '100ms' }}>
                         <h3 className="text-xs font-semibold text-[var(--color-text-tertiary)] uppercase tracking-wider pl-1">
                             Indentation
                         </h3>
@@ -150,6 +150,7 @@ export const LinterOutput: React.FC<LinterOutputProps> = ({
                                     key={`indent-${index}`}
                                     error={error}
                                     type="indentation"
+                                    index={index}
                                 />
                             ))}
                         </div>
@@ -158,7 +159,7 @@ export const LinterOutput: React.FC<LinterOutputProps> = ({
 
                 {/* Schema Errors */}
                 {errors.length > 0 && (
-                    <section className="space-y-3">
+                    <section className="space-y-3 animate-fade-in-soft" style={{ animationDelay: '200ms' }}>
                         <h3 className="text-xs font-semibold text-[var(--color-text-tertiary)] uppercase tracking-wider pl-1">
                             Schema Violations
                         </h3>
@@ -168,6 +169,7 @@ export const LinterOutput: React.FC<LinterOutputProps> = ({
                                     key={`error-${index}`}
                                     error={error}
                                     type="error"
+                                    index={index}
                                 />
                             ))}
                         </div>
@@ -176,7 +178,7 @@ export const LinterOutput: React.FC<LinterOutputProps> = ({
 
                 {/* Warnings */}
                 {warnings.length > 0 && (
-                    <section className="space-y-3">
+                    <section className="space-y-3 animate-fade-in-soft" style={{ animationDelay: '300ms' }}>
                         <h3 className="text-xs font-semibold text-[var(--color-text-tertiary)] uppercase tracking-wider pl-1">
                             Warnings
                         </h3>
@@ -186,6 +188,7 @@ export const LinterOutput: React.FC<LinterOutputProps> = ({
                                     key={`warning-${index}`}
                                     error={warning}
                                     type="warning"
+                                    index={index}
                                 />
                             ))}
                         </div>
@@ -199,7 +202,7 @@ export const LinterOutput: React.FC<LinterOutputProps> = ({
 /**
  * Minimalist Issue Card
  */
-const IssueCard: React.FC<{ error: ValidationError; type: 'indentation' | 'error' | 'warning' }> = ({ error, type }) => {
+const IssueCard: React.FC<{ error: ValidationError; type: 'indentation' | 'error' | 'warning'; index: number }> = ({ error, type, index }) => {
     const colors = {
         indentation: 'var(--color-blue)',
         error: 'var(--color-red)',
@@ -209,7 +212,10 @@ const IssueCard: React.FC<{ error: ValidationError; type: 'indentation' | 'error
     const color = colors[type];
 
     return (
-        <div className="group flex items-start gap-4 p-4 bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-lg hover:border-[var(--color-border-hover)] transition-all duration-200">
+        <div
+            className="group flex items-start gap-4 p-4 bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-lg hover:border-[var(--color-border-hover)] transition-all duration-200 hover:shadow-sm hover:translate-x-1 animate-fade-in-soft"
+            style={{ animationDelay: `${index * 50}ms` }}
+        >
             {/* Line Number Indicator */}
             <div className="flex flex-col items-center min-w-[2.5rem] pt-0.5">
                 <span className="text-[10px] font-medium text-[var(--color-text-tertiary)] uppercase">Line</span>

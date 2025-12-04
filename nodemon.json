@@ -8,5 +8,5 @@
         "dist",
         "node_modules"
     ],
-    "exec": "tsx server/index.js"
+    "exec": "npx tsx server/index.js"
 }

@@ -83,7 +83,7 @@ export const Documentation: React.FC = () => {
                             <button
                                 key={section.id}
                                 onClick={() => scrollToSection(section.id)}
-                                className={`w-full text-left px-3 py-2 rounded-md text-sm font-medium transition-colors ${activeSection === section.id
+                                className={`w-full text-left px-3 py-2 rounded-md text-sm font-medium transition-colors btn-press btn-hover ${activeSection === section.id
                                     ? 'bg-[var(--color-blue)] text-white shadow-sm'
                                     : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-tertiary)] hover:text-[var(--color-text-primary)]'
                                     }`}
