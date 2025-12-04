@@ -1,4 +1,4 @@
-# Kubernetes YAML Validator
+# Kubernetes YAML Validator (Podscribe)
 
 A powerful, intelligent web application for validating and automatically fixing Kubernetes YAML manifests with semantic understanding.
 

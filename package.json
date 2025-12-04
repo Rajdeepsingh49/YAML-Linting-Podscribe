@@ -9,7 +9,9 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "build:cli": "tsc -p tsconfig.cli.json",
-    "server": "nodemon server/index.js"
+    "server": "nodemon server/index.js",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
@@ -59,6 +61,7 @@
     "tsx": "^4.21.0",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.46.4",
-    "vite": "^7.2.4"
+    "vite": "^7.2.4",
+    "vitest": "^4.0.15"
   }
 }
