@@ -5,7 +5,7 @@
 
 import type { SemanticLine, FixSuggestion, FixerOptions } from '../semantic/types.js';
 import { SemanticParser } from '../semantic/semantic-parser.js';
-import { getExpectedType, coerceToType, matchesExpectedType } from '../knowledge/type-registry.js';
+import { getExpectedType, coerceValue, matchesExpectedType } from '../knowledge/type-registry.js';
 import { isKnownField } from '../knowledge/field-patterns.js';
 
 export class TypeCoercer {
@@ -64,9 +64,9 @@ export class TypeCoercer {
         }
 
         // Try to coerce value
-        const coercedValue = coerceToType(fieldName, line.value);
-        if (coercedValue !== line.value) {
-            return this.createCoercionFix(line, coercedValue, expectedType);
+        const result = coerceValue(fieldName, line.value);
+        if (result.success && result.value !== line.value) {
+            return this.createCoercionFix(line, String(result.value), expectedType);
         }
 
         return null;

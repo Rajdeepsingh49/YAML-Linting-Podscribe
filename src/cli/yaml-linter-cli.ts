@@ -1,6 +1,6 @@
 import { Command } from 'commander';
 import * as fs from 'fs';
-import * as path from 'path';
+
 import { YAMLValidator } from '../core/yaml-validator-complete.js';
 import chalk from 'chalk';
 

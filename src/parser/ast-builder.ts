@@ -839,7 +839,7 @@ export class ASTBuilder {
                 const docMatch = segment.match(/^doc_(\d+)$/);
                 if (docMatch) {
                     const docIndex = parseInt(docMatch[1], 10);
-                    const doc = (current as RootNode).documents[docIndex];
+                    const doc: DocumentNode | undefined = (current as RootNode).documents[docIndex];
                     if (!doc) return null;
                     current = doc;
                     continue;
@@ -847,7 +847,7 @@ export class ASTBuilder {
             }
 
             if (current.type === 'document') {
-                const content = (current as DocumentNode).content;
+                const content: ASTNode | null = (current as DocumentNode).content;
                 if (!content) return null;
                 current = content;
             }
@@ -857,8 +857,11 @@ export class ASTBuilder {
                 if (!child) return null;
                 current = child;
             } else if (current.type === 'sequence') {
+                // Array index
                 const index = parseInt(segment, 10);
-                const child = (current as SequenceNode).children[index];
+                if (isNaN(index)) return null;
+
+                const child: ASTNode | undefined = (current as SequenceNode).children[index];
                 if (!child) return null;
                 current = child;
             } else {

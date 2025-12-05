@@ -18,17 +18,18 @@ import SpeedIcon from '@mui/icons-material/Speed';
 import SecurityIcon from '@mui/icons-material/Security';
 import DescriptionIcon from '@mui/icons-material/Description';
 import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ErrorIcon from '@mui/icons-material/Error';
-import FolderIcon from '@mui/icons-material/Folder';
 import CodeIcon from '@mui/icons-material/Code';
 import StorageIcon from '@mui/icons-material/Storage';
-import SettingsIcon from '@mui/icons-material/Settings';
 import LockIcon from '@mui/icons-material/Lock';
 import HealthAndSafetyIcon from '@mui/icons-material/HealthAndSafety';
 import ScaleIcon from '@mui/icons-material/Scale';
 
-export const Documentation: React.FC = () => {
+interface DocumentationProps {
+    onClose?: () => void;
+}
+
+export const Documentation: React.FC<DocumentationProps> = ({ onClose }) => {
     const [activeSection, setActiveSection] = useState('overview');
     const [searchQuery, setSearchQuery] = useState('');
 
@@ -89,7 +90,20 @@ export const Documentation: React.FC = () => {
             <aside className="w-72 flex-shrink-0 border-r border-[var(--color-border)]/50 bg-[var(--color-bg-secondary)]/50 backdrop-blur-sm overflow-y-auto">
                 <div className="p-5 space-y-4">
                     <div className="px-2 pb-4 border-b border-[var(--color-border)]/30">
-                        <h2 className="text-xl font-extrabold text-[var(--color-text-primary)]">Podscribe</h2>
+                        <div className="flex items-center justify-between mb-2">
+                            <h2 className="text-xl font-extrabold text-[var(--color-text-primary)]">Podscribe</h2>
+                            {onClose && (
+                                <button
+                                    onClick={onClose}
+                                    className="p-1.5 rounded-lg text-[var(--color-text-tertiary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-tertiary)] transition-colors"
+                                    title="Back to Editor"
+                                >
+                                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
+                            )}
+                        </div>
                         <p className="text-[11px] text-[var(--color-text-tertiary)]">Documentation v2.0</p>
                     </div>
                     <div className="relative">

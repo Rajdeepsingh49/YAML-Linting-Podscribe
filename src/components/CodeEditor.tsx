@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from 'react';
-import Editor, { type OnMount } from '@monaco-editor/react';
+import Editor, { DiffEditor, type OnMount } from '@monaco-editor/react';
 
 export interface EditorMarker {
     startLineNumber: number;
@@ -12,16 +12,29 @@ export interface EditorMarker {
 
 interface CodeEditorProps {
     value: string;
-    onChange: (value: string | undefined) => void;
+    onChange?: (value: string | undefined) => void;
     markers?: EditorMarker[];
     theme?: 'light' | 'dark';
+    diffMode?: boolean;
+    originalValue?: string;
+    modifiedValue?: string;
+    readOnly?: boolean;
 }
 
 /**
  * CodeEditor Component - Modern Theme Support
  * Features: Custom light/dark themes, smooth integration
  */
-export const CodeEditor: React.FC<CodeEditorProps> = ({ value, onChange, markers = [], theme = 'light' }) => {
+export const CodeEditor: React.FC<CodeEditorProps> = ({
+    value,
+    onChange,
+    markers = [],
+    theme = 'light',
+    diffMode = false,
+    originalValue = '',
+    modifiedValue = '',
+    readOnly = false
+}) => {
     const editorRef = useRef<any>(null);
     const monacoRef = useRef<any>(null);
 
@@ -70,18 +83,18 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({ value, onChange, markers
                 { token: 'variable', foreground: 'F87171' },
             ],
             colors: {
-                'editor.background': '#1E293B',
-                'editor.foreground': '#F8FAFC',
-                'editor.lineHighlightBackground': '#334155',
+                'editor.background': '#121212', // Pure blackish
+                'editor.foreground': '#F5F5F7',
+                'editor.lineHighlightBackground': '#1C1C1E',
                 'editor.selectionBackground': '#3B82F640',
-                'editorLineNumber.foreground': '#64748B',
-                'editorLineNumber.activeForeground': '#94A3B8',
-                'editorCursor.foreground': '#3B82F6',
-                'editor.selectionHighlightBackground': '#3B82F630',
-                'editorIndentGuide.background': '#334155',
-                'editorIndentGuide.activeBackground': '#475569',
-                'editorWidget.background': '#1E293B',
-                'editorWidget.border': '#334155',
+                'editorLineNumber.foreground': '#636366',
+                'editorLineNumber.activeForeground': '#98989D',
+                'editorCursor.foreground': '#0A84FF',
+                'editor.selectionHighlightBackground': '#1A3045',
+                'editorIndentGuide.background': '#2C2C2E',
+                'editorIndentGuide.activeBackground': '#48484A',
+                'editorWidget.background': '#1C1C1E',
+                'editorWidget.border': '#2C2C2E',
             },
         });
 
@@ -106,57 +119,83 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({ value, onChange, markers
     }, [markers]);
 
     return (
-        <div className="h-full w-full bg-[var(--color-bg-card)] border-r border-[var(--glass-border)]">
-            <div className="px-5 py-3 border-b border-[var(--glass-border)] bg-[var(--color-bg-secondary)]">
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h2 className="text-sm font-semibold text-[var(--color-text-primary)]">
-                            YAML Editor
-                        </h2>
-                        <p className="text-xs text-[var(--color-text-tertiary)] mt-0.5">
-                            Paste or type your Kubernetes manifest
-                        </p>
-                    </div>
-                </div>
-            </div>
-            <div className="h-[calc(100%-57px)]">
-                <Editor
-                    height="100%"
-                    defaultLanguage="yaml"
-                    value={value}
-                    onChange={onChange}
-                    onMount={handleEditorDidMount}
-                    options={{
-                        minimap: { enabled: false },
-                        fontSize: 14,
-                        fontFamily: "'JetBrains Mono', 'Fira Code', 'Monaco', 'Menlo', monospace",
-                        lineHeight: 22,
-                        scrollBeyondLastLine: false,
-                        automaticLayout: true,
-                        padding: { top: 20, bottom: 20 },
-                        renderLineHighlight: 'all',
-                        smoothScrolling: true,
-                        cursorBlinking: 'smooth',
-                        cursorSmoothCaretAnimation: 'on',
-                        fontLigatures: true,
-                        lineNumbers: 'on',
-                        glyphMargin: false,
-                        folding: true,
-                        lineDecorationsWidth: 0,
-                        lineNumbersMinChars: 4,
-                        renderWhitespace: 'selection',
-                        scrollbar: {
-                            vertical: 'auto',
-                            horizontal: 'auto',
-                            useShadows: false,
-                            verticalScrollbarSize: 10,
-                            horizontalScrollbarSize: 10,
-                        },
-                        bracketPairColorization: {
-                            enabled: true,
-                        },
-                    }}
-                />
+        <div className="h-full w-full bg-[var(--color-bg-card)]">
+            <div className="h-full">
+                {diffMode ? (
+                    <DiffEditor
+                        height="100%"
+                        original={originalValue}
+                        modified={modifiedValue}
+                        onMount={(editor, monaco) => {
+                            // Reuse the same theme setup logic
+                            handleEditorDidMount(editor as any, monaco);
+                        }}
+                        theme={theme === 'dark' ? 'modern-dark' : 'modern-light'}
+                        options={{
+                            readOnly: true,
+                            fontFamily: "'JetBrains Mono', 'Fira Code', 'Monaco', 'Menlo', monospace",
+                            fontSize: 14,
+                            lineHeight: 22,
+                            scrollBeyondLastLine: false,
+                            automaticLayout: true,
+                            padding: { top: 20, bottom: 20 },
+                            renderSideBySide: true,
+                            smoothScrolling: true,
+                            fontLigatures: true,
+                            lineNumbers: 'on',
+                            glyphMargin: false,
+                            folding: true,
+                            renderOverviewRuler: false,
+                            scrollbar: {
+                                vertical: 'auto',
+                                horizontal: 'auto',
+                                useShadows: false,
+                                verticalScrollbarSize: 10,
+                                horizontalScrollbarSize: 10,
+                            },
+                        }}
+                    />
+                ) : (
+                    <Editor
+                        height="100%"
+                        defaultLanguage="yaml"
+                        value={value}
+                        onChange={onChange}
+                        onMount={handleEditorDidMount}
+                        theme={theme === 'dark' ? 'modern-dark' : 'modern-light'}
+                        options={{
+                            readOnly: readOnly,
+                            minimap: { enabled: false },
+                            fontSize: 14,
+                            fontFamily: "'JetBrains Mono', 'Fira Code', 'Monaco', 'Menlo', monospace",
+                            lineHeight: 22,
+                            scrollBeyondLastLine: false,
+                            automaticLayout: true,
+                            padding: { top: 20, bottom: 20 },
+                            renderLineHighlight: 'all',
+                            smoothScrolling: true,
+                            cursorBlinking: 'smooth',
+                            cursorSmoothCaretAnimation: 'on',
+                            fontLigatures: true,
+                            lineNumbers: 'on',
+                            glyphMargin: false,
+                            folding: true,
+                            lineDecorationsWidth: 0,
+                            lineNumbersMinChars: 4,
+                            renderWhitespace: 'selection',
+                            scrollbar: {
+                                vertical: 'auto',
+                                horizontal: 'auto',
+                                useShadows: false,
+                                verticalScrollbarSize: 10,
+                                horizontalScrollbarSize: 10,
+                            },
+                            bracketPairColorization: {
+                                enabled: true,
+                            },
+                        }}
+                    />
+                )}
             </div>
         </div>
     );

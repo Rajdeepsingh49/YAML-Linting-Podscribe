@@ -107,10 +107,10 @@ export class YAMLValidator {
     /**
      * METHOD 1: Validate Content
      */
-    public validate(content: string, options: ValidationOptions = {}): ValidationResult {
+    public validate(content: string, _options: ValidationOptions = {}): ValidationResult {
         const errors: ValidationError[] = [];
         const structuralIssues: StructuralIssue[] = [];
-        const indentSize = options.indentSize || this.indentSize; // eslint-disable-line @typescript-eslint/no-unused-vars
+
 
         // 1. Basic Syntax Validation (using js-yaml)
         try {

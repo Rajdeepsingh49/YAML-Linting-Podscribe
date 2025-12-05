@@ -1,24 +1,14 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
-import Editor, { type OnMount } from '@monaco-editor/react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { Documentation } from './Documentation';
-
-interface ValidationError {
-    line: number;
-    column?: number;
-    message: string;
-    severity: 'critical' | 'error' | 'warning' | 'info';
-    code?: string;
-    fixable?: boolean;
-}
-
-interface ValidationChange {
-    type: string;
-    line: number;
-    original: string;
-    fixed: string;
-    reason: string;
-    severity: string;
-}
+import { StatisticsPanel } from './StatisticsPanel';
+import { CodeEditor } from './CodeEditor';
+import {
+    type FixChange,
+    type ValidationError,
+    type ValidationSummary,
+    getConfidenceColor,
+    formatConfidence
+} from '../api/yaml-fixer-api';
 
 interface ValidationResponse {
     success: boolean;
@@ -26,9 +16,11 @@ interface ValidationResponse {
     fixed: string;
     errors: ValidationError[];
     fixedCount: number;
-    changes: ValidationChange[];
+    changes: FixChange[];
     isValid: boolean;
     structuralExplanation?: string;
+    summary?: ValidationSummary;
+    confidence?: number;
 }
 
 interface ToastNotification {
@@ -42,8 +34,11 @@ export const UnifiedValidator: React.FC = () => {
     const [inputYaml, setInputYaml] = useState('');
     const [outputYaml, setOutputYaml] = useState('');
     const [errors, setErrors] = useState<ValidationError[]>([]);
-    const [changes, setChanges] = useState<ValidationChange[]>([]);
+    const [changes, setChanges] = useState<FixChange[]>([]);
     const [isValidating, setIsValidating] = useState(false);
+    const [summary, setSummary] = useState<ValidationSummary | undefined>(undefined);
+    const [overallConfidence, setOverallConfidence] = useState(0);
+    const [processingTime, setProcessingTime] = useState(0);
 
     const [isValid, setIsValid] = useState(false);
     const [fixEnabled, setFixEnabled] = useState(true);
@@ -53,12 +48,13 @@ export const UnifiedValidator: React.FC = () => {
     const [consoleTab, setConsoleTab] = useState<'fixes' | 'errors'>('fixes');
     const [toasts, setToasts] = useState<ToastNotification[]>([]);
     const [showConfetti, setShowConfetti] = useState(false);
-    const [serverStatus, setServerStatus] = useState<'connected' | 'disconnected'>('connected');
+
+
+    // New Feature States
+    const [showDiff, setShowDiff] = useState(false);
+    const [confidenceFilter, setConfidenceFilter] = useState<'all' | 'high' | 'medium' | 'low'>('all');
 
     // Refs
-    const inputEditorRef = useRef<any>(null);
-    const outputEditorRef = useRef<any>(null);
-    const monacoRef = useRef<any>(null);
     const toastIdRef = useRef(0);
 
     // Toast notifications
@@ -70,24 +66,7 @@ export const UnifiedValidator: React.FC = () => {
         }, 3000);
     }, []);
 
-    // Check server status
-    useEffect(() => {
-        const checkServer = async () => {
-            try {
-                const response = await fetch('http://localhost:3001/api/yaml/validate', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ content: 'test: true', options: {} }),
-                });
-                setServerStatus(response.ok ? 'connected' : 'disconnected');
-            } catch {
-                setServerStatus('disconnected');
-            }
-        };
-        checkServer();
-        const interval = setInterval(checkServer, 30000);
-        return () => clearInterval(interval);
-    }, []);
+
 
     // Validation handler
     const handleValidate = useCallback(async () => {
@@ -97,6 +76,7 @@ export const UnifiedValidator: React.FC = () => {
         }
 
         setIsValidating(true);
+        const startTime = performance.now();
 
         try {
             const response = await fetch('http://localhost:3001/api/yaml/validate', {
@@ -111,6 +91,8 @@ export const UnifiedValidator: React.FC = () => {
             if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
 
             const data: ValidationResponse = await response.json();
+            const endTime = performance.now();
+            setProcessingTime(Math.round(endTime - startTime));
 
             // Only set fixed output if fix is enabled
             if (fixEnabled) {
@@ -121,8 +103,9 @@ export const UnifiedValidator: React.FC = () => {
 
             setErrors(data.errors || []);
             setChanges(data.changes || []);
-            setChanges(data.changes || []);
             setIsValid(data.isValid);
+            setSummary(data.summary);
+            setOverallConfidence(data.confidence || 0);
 
             // Open console to show results
             setShowConsole(true);
@@ -146,7 +129,6 @@ export const UnifiedValidator: React.FC = () => {
         } catch (error) {
             console.error('Validation error:', error);
             addToast('Failed to connect to validation server', 'error');
-            setServerStatus('disconnected');
         } finally {
             setIsValidating(false);
         }
@@ -177,21 +159,7 @@ export const UnifiedValidator: React.FC = () => {
     // Theme effect
     useEffect(() => {
         document.documentElement.setAttribute('data-theme', theme);
-        if (monacoRef.current) {
-            monacoRef.current.editor.setTheme(theme === 'dark' ? 'vs-dark' : 'vs');
-        }
     }, [theme]);
-
-    // Monaco editor setup
-    const handleInputEditorMount: OnMount = (editor, monaco) => {
-        inputEditorRef.current = editor;
-        monacoRef.current = monaco;
-    };
-
-    const handleOutputEditorMount: OnMount = (editor, monaco) => {
-        outputEditorRef.current = editor;
-        if (!monacoRef.current) monacoRef.current = monaco;
-    };
 
     // Utility functions
     const handleCopy = () => {
@@ -224,12 +192,61 @@ export const UnifiedValidator: React.FC = () => {
     };
 
     // Group errors by severity
-    const groupedErrors = errors.reduce((acc, error) => {
+    const groupedErrors = useMemo(() => errors.reduce((acc, error) => {
         const severity = error.severity;
         if (!acc[severity]) acc[severity] = [];
         acc[severity].push(error);
         return acc;
-    }, {} as Record<string, ValidationError[]>);
+    }, {} as Record<string, ValidationError[]>), [errors]);
+
+    // Group changes by category (Adaptive Grouping)
+    const groupedChanges = useMemo(() => {
+        // Filter by confidence first
+        const filtered = changes.filter(change => {
+            if (confidenceFilter === 'all') return true;
+            if (confidenceFilter === 'high') return change.confidence >= 0.9;
+            if (confidenceFilter === 'medium') return change.confidence >= 0.7 && change.confidence < 0.9;
+            if (confidenceFilter === 'low') return change.confidence < 0.7;
+            return true;
+        });
+
+        // Group by inferred category
+        return filtered.reduce((acc, change) => {
+            let category = 'Semantic'; // Default
+
+            // Infer category from type
+            const type = change.type.toLowerCase();
+            if (type.includes('syntax') || type.includes('colon') || type.includes('quote') || type.includes('indent')) {
+                category = 'Syntax';
+            } else if (type.includes('structure') || type.includes('nest') || type.includes('relocate')) {
+                category = 'Structure';
+            } else if (type.includes('type') || type.includes('convert') || type.includes('duplicate')) {
+                category = 'Semantic';
+            }
+
+            if (!acc[category]) acc[category] = [];
+            acc[category].push(change);
+            return acc;
+        }, {} as Record<string, FixChange[]>);
+    }, [changes, confidenceFilter]);
+
+    // Calculate stats if summary is missing
+    const stats = useMemo(() => {
+        if (summary) return summary;
+
+        // Fallback calculation
+        return {
+            totalIssues: errors.length + changes.length,
+            fixedCount: changes.length,
+            parsingSuccess: true,
+            bySeverity: { critical: 0, error: 0, warning: 0, info: 0 }, // Placeholder
+            byCategory: { syntax: 0, structure: 0, semantic: 0, type: 0 },
+            byConfidence: { high: 0, medium: 0, low: 0 },
+            remainingIssues: errors.length,
+            overallConfidence: overallConfidence,
+            processingTimeMs: processingTime
+        };
+    }, [summary, errors, changes, overallConfidence, processingTime]);
 
     return (
         <div className="h-screen flex flex-col bg-gradient-to-br from-[var(--color-bg-primary)] to-[var(--color-bg-secondary)] overflow-hidden font-sans animate-fade-in-soft" data-theme={theme}>
@@ -299,9 +316,9 @@ export const UnifiedValidator: React.FC = () => {
             <div className="flex-1 flex overflow-hidden bg-[var(--color-bg-secondary)]">
                 {/* Editor Area */}
                 <main className="flex-1 flex flex-col min-w-0 transition-all duration-300">
-                    <div className="flex-1 flex h-full">
+                    <div className="flex-1 flex flex-col md:flex-row h-full">
                         {/* Input Panel */}
-                        <div className="flex-1 flex flex-col bg-[var(--color-bg-primary)] animate-slide-up" style={{ animationDelay: '100ms' }}>
+                        <div className="flex-1 flex flex-col bg-[var(--color-bg-primary)]">
                             {/* Panel Header - Borderless */}
                             <div className="h-11 flex items-center justify-between px-4 bg-[var(--color-bg-secondary)]/40">
                                 <div className="flex items-center gap-2">
@@ -319,43 +336,16 @@ export const UnifiedValidator: React.FC = () => {
                             </div>
                             {/* Editor */}
                             <div className="flex-1 relative">
-                                <Editor
-                                    height="100%"
-                                    defaultLanguage="yaml"
+                                <CodeEditor
                                     value={inputYaml}
                                     onChange={(value) => setInputYaml(value || '')}
-                                    onMount={handleInputEditorMount}
-                                    theme={theme === 'dark' ? 'vs-dark' : 'vs'}
-                                    options={{
-                                        fontFamily: "'JetBrains Mono', 'Fira Code', Consolas, monospace",
-                                        fontSize: 13,
-                                        lineHeight: 21,
-                                        minimap: { enabled: false },
-                                        scrollBeyondLastLine: false,
-                                        automaticLayout: true,
-                                        padding: { top: 20, bottom: 20 },
-                                        renderLineHighlight: 'all',
-                                        smoothScrolling: true,
-                                        cursorBlinking: 'smooth',
-                                        cursorWidth: 2,
-                                        fontLigatures: true,
-                                        lineNumbers: 'on',
-                                        glyphMargin: false,
-                                        folding: true,
-                                        scrollbar: {
-                                            vertical: 'visible',
-                                            horizontal: 'visible',
-                                            useShadows: false,
-                                            verticalScrollbarSize: 10,
-                                            horizontalScrollbarSize: 10,
-                                        },
-                                    }}
+                                    theme={theme}
                                 />
                             </div>
                         </div>
 
                         {/* Output Panel */}
-                        <div className="flex-1 flex flex-col bg-[var(--color-bg-primary)] animate-slide-up" style={{ animationDelay: '200ms' }}>
+                        <div className="flex-1 flex flex-col bg-[var(--color-bg-primary)]">
                             {/* Panel Header - Borderless & Elegant */}
                             <div className="h-11 flex items-center justify-between px-4 bg-[var(--color-bg-secondary)]/40">
                                 <div className="flex items-center gap-2">
@@ -397,6 +387,23 @@ export const UnifiedValidator: React.FC = () => {
                                         )}
                                     </button>
 
+                                    {/* Diff Toggle */}
+                                    {outputYaml && (
+                                        <button
+                                            onClick={() => setShowDiff(!showDiff)}
+                                            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold transition-all btn-press ${showDiff
+                                                ? 'bg-[var(--color-blue)] text-white'
+                                                : 'bg-[var(--color-bg-primary)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'
+                                                }`}
+                                            title="Toggle Diff View"
+                                        >
+                                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                                            </svg>
+                                            {showDiff ? 'Hide Changes' : 'Show Changes'}
+                                        </button>
+                                    )}
+
                                     {/* Actions - Borderless Icons */}
                                     {outputYaml && (
                                         <div className="flex items-center gap-0.5 ml-1">
@@ -432,36 +439,13 @@ export const UnifiedValidator: React.FC = () => {
                                         <p className="text-[13px] font-medium">Validation results will appear here</p>
                                     </div>
                                 )}
-                                <Editor
-                                    height="100%"
-                                    defaultLanguage="yaml"
+                                <CodeEditor
                                     value={outputYaml}
-                                    onMount={handleOutputEditorMount}
-                                    theme={theme === 'dark' ? 'vs-dark' : 'vs'}
-                                    options={{
-                                        readOnly: true,
-                                        fontFamily: "'JetBrains Mono', 'Fira Code', Consolas, monospace",
-                                        fontSize: 13,
-                                        lineHeight: 21,
-                                        minimap: { enabled: false },
-                                        scrollBeyondLastLine: false,
-                                        automaticLayout: true,
-                                        padding: { top: 20, bottom: 20 },
-                                        renderLineHighlight: 'none',
-                                        smoothScrolling: true,
-                                        fontLigatures: true,
-                                        lineNumbers: 'on',
-                                        glyphMargin: false,
-                                        folding: true,
-                                        domReadOnly: true,
-                                        scrollbar: {
-                                            vertical: 'visible',
-                                            horizontal: 'visible',
-                                            useShadows: false,
-                                            verticalScrollbarSize: 10,
-                                            horizontalScrollbarSize: 10,
-                                        },
-                                    }}
+                                    theme={theme}
+                                    readOnly={true}
+                                    diffMode={showDiff}
+                                    originalValue={inputYaml}
+                                    modifiedValue={outputYaml}
                                 />
                             </div>
                         </div>
@@ -469,253 +453,308 @@ export const UnifiedValidator: React.FC = () => {
                 </main>
 
                 {/* Console Sidebar - Refined & Polished */}
-                {
-                    showConsole && (
-                        <aside className="w-[360px] flex-shrink-0 bg-[var(--color-bg-primary)]/95 backdrop-blur-3xl flex flex-col animate-slide-in-right z-20 shadow-xl">
-                            {/* Console Header */}
-                            <div className="h-11 flex items-center justify-between px-3.5 bg-[var(--color-bg-secondary)]/30">
-                                <div className="flex items-center gap-2">
-                                    <div className="w-6 h-6 rounded-md bg-gradient-to-br from-[var(--color-blue)] to-[var(--color-blue-dark)] flex items-center justify-center shadow-sm">
-                                        <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                        </svg>
-                                    </div>
-                                    <span className="text-xs font-bold text-[var(--color-text-primary)]">Console</span>
-                                </div>
-                                <button
-                                    onClick={() => setShowConsole(false)}
-                                    className="w-6 h-6 rounded-md flex items-center justify-center text-[var(--color-text-tertiary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-secondary)]/50 transition-all btn-press btn-hover"
-                                    title="Close"
-                                >
-                                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                {showConsole && (
+                    <aside className="fixed inset-0 z-50 md:static md:z-20 md:w-[360px] flex-shrink-0 bg-[var(--color-bg-primary)]/95 backdrop-blur-3xl flex flex-col animate-slide-in-right shadow-xl">
+                        {/* Console Header */}
+                        <div className="h-11 flex items-center justify-between px-3.5 bg-[var(--color-bg-secondary)]/30">
+                            <div className="flex items-center gap-2">
+                                <div className="w-6 h-6 rounded-md bg-gradient-to-br from-[var(--color-blue)] to-[var(--color-blue-dark)] flex items-center justify-center shadow-sm">
+                                    <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                     </svg>
-                                </button>
-                            </div>
-
-                            {/* Tabs - Segmented Control */}
-                            <div className="px-3 py-2">
-                                <div className="flex p-0.5 rounded-lg bg-[var(--color-bg-secondary)]/50">
-                                    <button
-                                        onClick={() => setConsoleTab('fixes')}
-                                        className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-md text-[11px] font-bold transition-all duration-150 btn-press ${consoleTab === 'fixes'
-                                            ? 'bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] shadow-sm'
-                                            : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'
-                                            }`}
-                                    >
-                                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                        </svg>
-                                        Fixes
-                                        {changes.length > 0 && (
-                                            <span className="min-w-[18px] h-[18px] px-1 rounded-full bg-[var(--color-green)] text-white text-[9px] font-bold flex items-center justify-center">
-                                                {changes.length}
-                                            </span>
-                                        )}
-                                    </button>
-                                    <button
-                                        onClick={() => setConsoleTab('errors')}
-                                        className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-md text-[11px] font-bold transition-all duration-150 btn-press ${consoleTab === 'errors'
-                                            ? 'bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] shadow-sm'
-                                            : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'
-                                            }`}
-                                    >
-                                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                        </svg>
-                                        Errors
-                                        {errors.length > 0 && (
-                                            <span className="min-w-[18px] h-[18px] px-1 rounded-full bg-[var(--color-red)] text-white text-[9px] font-bold flex items-center justify-center">
-                                                {errors.length}
-                                            </span>
-                                        )}
-                                    </button>
                                 </div>
+                                <span className="text-xs font-bold text-[var(--color-text-primary)]">Console</span>
                             </div>
-
-                            {/* Content */}
-                            <div className="flex-1 overflow-y-auto px-3 pb-3 space-y-2">
-                                {consoleTab === 'fixes' ? (
-                                    changes.length > 0 ? (
-                                        changes.map((change, idx) => (
-                                            <div
-                                                key={idx}
-                                                className="bg-[var(--color-bg-secondary)]/40 rounded-lg p-3 hover:bg-[var(--color-bg-secondary)]/60 transition-all animate-fade-in-soft"
-                                                style={{ animationDelay: `${idx * 50}ms` }}
-                                            >
-                                                <div className="flex items-start gap-2.5">
-                                                    {/* Line Number */}
-                                                    <div className="w-7 h-7 rounded-md bg-[var(--color-green)]/15 text-[var(--color-green)] flex items-center justify-center text-[10px] font-bold flex-shrink-0">
-                                                        {change.line}
-                                                    </div>
-                                                    <div className="flex-1 min-w-0">
-                                                        {/* Type */}
-                                                        <span className="inline-block text-[9px] font-bold uppercase text-[var(--color-green)] tracking-wide px-1.5 py-0.5 rounded bg-[var(--color-green)]/10 mb-1.5">
-                                                            {change.type}
-                                                        </span>
-                                                        {/* Reason */}
-                                                        <p className="text-[10px] text-[var(--color-text-primary)] mb-2 leading-relaxed font-medium">
-                                                            {change.reason}
-                                                        </p>
-                                                        {/* Diff */}
-                                                        <div className="space-y-1">
-                                                            <div className="flex items-start gap-1.5">
-                                                                <span className="text-[8px] font-bold text-[var(--color-red)] w-8 pt-1">FROM</span>
-                                                                <code className="flex-1 text-[9px] font-mono bg-[var(--color-red)]/10 text-[var(--color-red)] px-2 py-1 rounded break-all">
-                                                                    {change.original}
-                                                                </code>
-                                                            </div>
-                                                            <div className="flex items-start gap-1.5">
-                                                                <span className="text-[8px] font-bold text-[var(--color-green)] w-8 pt-1">TO</span>
-                                                                <code className="flex-1 text-[9px] font-mono bg-[var(--color-green)]/10 text-[var(--color-green)] px-2 py-1 rounded break-all">
-                                                                    {change.fixed}
-                                                                </code>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        ))
-                                    ) : (
-                                        <div className="flex flex-col items-center justify-center h-40 text-[var(--color-text-tertiary)] animate-fade-in-soft">
-                                            <div className="w-12 h-12 rounded-xl bg-[var(--color-bg-secondary)]/50 flex items-center justify-center mb-3">
-                                                <svg className="w-6 h-6 opacity-40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 13l4 4L19 7" />
-                                                </svg>
-                                            </div>
-                                            <p className="text-xs font-medium">No fixes applied</p>
-                                            <p className="text-[10px] mt-0.5 opacity-50">Run validation to see fixes</p>
-                                        </div>
-                                    )
-                                ) : (
-                                    errors.length > 0 ? (
-                                        Object.entries(groupedErrors).map(([severity, severityErrors], groupIdx) => (
-                                            <div key={severity} className="space-y-1.5 animate-fade-in-soft" style={{ animationDelay: `${groupIdx * 100}ms` }}>
-                                                <div className="flex items-center gap-1.5 px-0.5 py-1">
-                                                    <span className={`w-1.5 h-1.5 rounded-full ${severity === 'critical' || severity === 'error' ? 'bg-[var(--color-red)]' : severity === 'warning' ? 'bg-[var(--color-orange)]' : 'bg-[var(--color-blue)]'}`}></span>
-                                                    <span className="text-[9px] font-bold uppercase tracking-wide text-[var(--color-text-tertiary)]">
-                                                        {severity} · {severityErrors.length}
-                                                    </span>
-                                                </div>
-                                                {severityErrors.map((error, idx) => (
-                                                    <div
-                                                        key={idx}
-                                                        className={`bg-[var(--color-bg-secondary)]/40 rounded-lg p-3 hover:bg-[var(--color-bg-secondary)]/60 transition-all border-l-[3px] ${severity === 'critical' || severity === 'error' ? 'border-l-[var(--color-red)]' :
-                                                            severity === 'warning' ? 'border-l-[var(--color-orange)]' : 'border-l-[var(--color-blue)]'
-                                                            }`}
-                                                    >
-                                                        <div className="flex items-center gap-1.5 mb-1.5">
-                                                            <span className="text-[9px] font-mono bg-[var(--color-bg-primary)]/50 px-1.5 py-0.5 rounded text-[var(--color-text-secondary)] font-bold">
-                                                                L{error.line}
-                                                            </span>
-                                                            {error.code && (
-                                                                <span className="text-[9px] font-mono text-[var(--color-text-tertiary)]">
-                                                                    {error.code}
-                                                                </span>
-                                                            )}
-                                                        </div>
-                                                        <p className="text-[10px] font-medium text-[var(--color-text-primary)] leading-relaxed">
-                                                            {error.message}
-                                                        </p>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        ))
-                                    ) : (
-                                        <div className="flex flex-col items-center justify-center h-40 text-[var(--color-text-tertiary)] animate-fade-in-soft">
-                                            <div className="w-12 h-12 rounded-xl bg-[var(--color-bg-secondary)]/50 flex items-center justify-center mb-3">
-                                                <svg className="w-6 h-6 opacity-40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                </svg>
-                                            </div>
-                                            <p className="text-xs font-medium">No errors found</p>
-                                            <p className="text-[10px] mt-0.5 opacity-50">Your YAML is valid!</p>
-                                        </div>
-                                    )
-                                )}
-                            </div>
-                        </aside>
-                    )
-                }
-            </div >
-
-            {/* Footer - Status Bar */}
-            < footer className="h-[32px] flex-shrink-0 flex items-center justify-between px-6 border-t border-[var(--color-border-light)] bg-[var(--color-bg-primary)] text-[11px] text-[var(--color-text-secondary)]" >
-                <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-2">
-                        <div className={`w-1.5 h-1.5 rounded-full ${serverStatus === 'connected' ? 'bg-[var(--color-green)]' : 'bg-[var(--color-red)]'}`}></div>
-                        <span className="font-medium">{serverStatus === 'connected' ? 'System Online' : 'System Offline'}</span>
-                    </div>
-                </div>
-                <div className="flex items-center gap-4">
-                    <span>Frontend v2.0.0</span>
-                    <span className="text-[var(--color-border)]">|</span>
-                    <span>Validator Engine v1.5.0</span>
-                </div>
-            </footer >
-
-            {/* Documentation Overlay - Full Screen */}
-            {
-                showDocumentation && (
-                    <div className="fixed inset-0 z-50 bg-[var(--color-bg-primary)] animate-fade-in">
-                        <div className="absolute top-4 right-4 z-50">
                             <button
-                                onClick={() => setShowDocumentation(false)}
-                                className="p-2 rounded-full bg-[var(--color-bg-secondary)] hover:bg-[var(--color-bg-tertiary)] text-[var(--color-text-primary)] shadow-md transition-all hover:scale-105 btn-press"
+                                onClick={() => setShowConsole(false)}
+                                className="w-6 h-6 rounded-md flex items-center justify-center text-[var(--color-text-tertiary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-secondary)]/50 transition-all btn-press btn-hover"
+                                title="Close"
                             >
-                                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                                 </svg>
                             </button>
                         </div>
-                        <Documentation />
-                    </div>
-                )
-            }
 
-            {/* Toast Notifications */}
-            <div className="fixed top-20 right-6 z-[100] space-y-2 pointer-events-none">
-                {toasts.map((toast) => (
+                        {/* Tabs - Segmented Control */}
+                        <div className="px-3 py-2">
+                            <div className="flex p-0.5 rounded-lg bg-[var(--color-bg-secondary)]/50">
+                                <button
+                                    onClick={() => setConsoleTab('fixes')}
+                                    className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-md text-[11px] font-bold transition-all duration-150 btn-press ${consoleTab === 'fixes'
+                                        ? 'bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] shadow-sm'
+                                        : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'
+                                        }`}
+                                >
+                                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                    </svg>
+                                    Fixes
+                                    {changes.length > 0 && (
+                                        <span className="min-w-[18px] h-[18px] px-1 rounded-full bg-[var(--color-green)] text-white text-[9px] font-bold flex items-center justify-center">
+                                            {changes.length}
+                                        </span>
+                                    )}
+                                </button>
+                                <button
+                                    onClick={() => setConsoleTab('errors')}
+                                    className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-md text-[11px] font-bold transition-all duration-150 btn-press ${consoleTab === 'errors'
+                                        ? 'bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] shadow-sm'
+                                        : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'
+                                        }`}
+                                >
+                                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    Errors
+                                    {errors.length > 0 && (
+                                        <span className="min-w-[18px] h-[18px] px-1 rounded-full bg-[var(--color-red)] text-white text-[9px] font-bold flex items-center justify-center">
+                                            {errors.length}
+                                        </span>
+                                    )}
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Content */}
+                        <div className="flex-1 overflow-y-auto px-3 pb-3 space-y-4">
+                            {/* Statistics Panel */}
+                            {(changes.length > 0 || errors.length > 0) && (
+                                <div className="animate-fade-in-soft">
+                                    <StatisticsPanel
+                                        totalIssues={stats.totalIssues}
+                                        fixedCount={stats.fixedCount}
+                                        processingTimeMs={stats.processingTimeMs}
+                                        confidence={stats.overallConfidence}
+                                    />
+                                </div>
+                            )}
+
+                            {consoleTab === 'fixes' ? (
+                                changes.length > 0 ? (
+                                    <>
+                                        {/* Confidence Filter */}
+                                        <div className="flex items-center justify-between mb-2 px-1">
+                                            <span className="text-[10px] font-bold text-[var(--color-text-tertiary)] uppercase tracking-wider">
+                                                Applied Fixes
+                                            </span>
+                                            <select
+                                                value={confidenceFilter}
+                                                onChange={(e) => setConfidenceFilter(e.target.value as any)}
+                                                className="bg-[var(--color-bg-secondary)] text-[var(--color-text-secondary)] text-[10px] font-medium rounded px-2 py-1 border border-[var(--glass-border)] outline-none focus:border-[var(--color-blue)]"
+                                            >
+                                                <option value="all">All Confidence</option>
+                                                <option value="high">High (≥90%)</option>
+                                                <option value="medium">Medium (70-89%)</option>
+                                                <option value="low">Low (&lt;70%)</option>
+                                            </select>
+                                        </div>
+
+                                        {/* Adaptive Grouping */}
+                                        {Object.entries(groupedChanges).map(([category, categoryChanges], groupIdx) => (
+                                            <div key={category} className="animate-fade-in-soft" style={{ animationDelay: `${groupIdx * 100}ms` }}>
+                                                <div className="flex items-center gap-2 mb-2 px-1">
+                                                    <div className={`h-px flex-1 ${category === 'Syntax' ? 'bg-[var(--color-blue)]/30' : category === 'Structure' ? 'bg-[var(--color-purple)]/30' : 'bg-[var(--color-green)]/30'}`}></div>
+                                                    <span className={`text-[10px] font-bold uppercase tracking-wider ${category === 'Syntax' ? 'text-[var(--color-blue)]' : category === 'Structure' ? 'text-[var(--color-purple)]' : 'text-[var(--color-green)]'}`}>
+                                                        {category} ({categoryChanges.length})
+                                                    </span>
+                                                    <div className={`h-px flex-1 ${category === 'Syntax' ? 'bg-[var(--color-blue)]/30' : category === 'Structure' ? 'bg-[var(--color-purple)]/30' : 'bg-[var(--color-green)]/30'}`}></div>
+                                                </div>
+
+                                                <div className="space-y-2">
+                                                    {categoryChanges.map((change, idx) => (
+                                                        <div
+                                                            key={`${category}-${idx}`}
+                                                            className="bg-[var(--color-bg-secondary)]/40 rounded-lg p-3 hover:bg-[var(--color-bg-secondary)]/60 transition-all border border-[var(--glass-border)] hover:border-[var(--color-border)]"
+                                                        >
+                                                            <div className="flex items-start gap-2.5">
+                                                                {/* Line Number */}
+                                                                <div className="w-7 h-7 rounded-md bg-[var(--color-bg-primary)] text-[var(--color-text-secondary)] flex items-center justify-center text-[10px] font-bold flex-shrink-0 border border-[var(--glass-border)]">
+                                                                    {change.line}
+                                                                </div>
+                                                                <div className="flex-1 min-w-0">
+                                                                    <div className="flex items-center justify-between mb-1.5">
+                                                                        {/* Type Badge */}
+                                                                        <span className="inline-block text-[9px] font-bold uppercase text-[var(--color-text-secondary)] tracking-wide px-1.5 py-0.5 rounded bg-[var(--color-bg-primary)] border border-[var(--glass-border)]">
+                                                                            {change.type}
+                                                                        </span>
+
+                                                                        {/* Confidence Badge */}
+                                                                        <span
+                                                                            className="text-[9px] font-bold px-1.5 py-0.5 rounded-full flex items-center gap-1"
+                                                                            style={{
+                                                                                backgroundColor: `${getConfidenceColor(change.confidence)}15`,
+                                                                                color: getConfidenceColor(change.confidence)
+                                                                            }}
+                                                                        >
+                                                                            {change.confidence >= 0.9 ? '★' : change.confidence >= 0.7 ? '●' : '⚠️'}
+                                                                            {formatConfidence(change.confidence)}
+                                                                        </span>
+                                                                    </div>
+
+                                                                    {/* Reason */}
+                                                                    <p className="text-[11px] text-[var(--color-text-primary)] mb-2 leading-relaxed font-medium">
+                                                                        {change.reason}
+                                                                    </p>
+
+                                                                    {/* Diff */}
+                                                                    <div className="space-y-1 bg-[var(--color-bg-primary)]/50 rounded p-2 border border-[var(--glass-border)]">
+                                                                        <div className="flex items-start gap-1.5">
+                                                                            <span className="text-[8px] font-bold text-[var(--color-red)] w-6 pt-0.5 opacity-70">WAS</span>
+                                                                            <code className="flex-1 text-[10px] font-mono text-[var(--color-text-secondary)] break-all opacity-70 line-through decoration-[var(--color-red)]/50">
+                                                                                {change.original}
+                                                                            </code>
+                                                                        </div>
+                                                                        <div className="flex items-start gap-1.5">
+                                                                            <span className="text-[8px] font-bold text-[var(--color-green)] w-6 pt-0.5">NOW</span>
+                                                                            <code className="flex-1 text-[10px] font-mono text-[var(--color-text-primary)] break-all font-bold">
+                                                                                {change.fixed}
+                                                                            </code>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </>
+                                ) : (
+                                    <div className="flex flex-col items-center justify-center h-40 text-[var(--color-text-tertiary)] animate-fade-in-soft">
+                                        <div className="w-12 h-12 rounded-xl bg-[var(--color-bg-secondary)]/50 flex items-center justify-center mb-3">
+                                            <svg className="w-6 h-6 opacity-40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 13l4 4L19 7" />
+                                            </svg>
+                                        </div>
+                                        <p className="text-xs font-medium">No fixes applied</p>
+                                        <p className="text-[10px] mt-0.5 opacity-50">Run validation to see fixes</p>
+                                    </div>
+                                )
+                            ) : (
+                                errors.length > 0 ? (
+                                    Object.entries(groupedErrors).map(([severity, severityErrors], groupIdx) => (
+                                        <div key={severity} className="space-y-1.5 animate-fade-in-soft" style={{ animationDelay: `${groupIdx * 100}ms` }}>
+                                            <div className="flex items-center gap-1.5 px-0.5 py-1">
+                                                <span className={`w-1.5 h-1.5 rounded-full ${severity === 'critical' || severity === 'error' ? 'bg-[var(--color-red)]' : severity === 'warning' ? 'bg-[var(--color-orange)]' : 'bg-[var(--color-blue)]'}`}></span>
+                                                <span className="text-[9px] font-bold uppercase tracking-wide text-[var(--color-text-tertiary)]">
+                                                    {severity} · {severityErrors.length}
+                                                </span>
+                                            </div>
+                                            {severityErrors.map((error, idx) => (
+                                                <div
+                                                    key={idx}
+                                                    className={`bg-[var(--color-bg-secondary)]/40 rounded-lg p-3 hover:bg-[var(--color-bg-secondary)]/60 transition-all border-l-[3px] ${severity === 'critical' || severity === 'error' ? 'border-l-[var(--color-red)]' :
+                                                        severity === 'warning' ? 'border-l-[var(--color-orange)]' : 'border-l-[var(--color-blue)]'
+                                                        }`}
+                                                >
+                                                    <div className="flex items-center gap-1.5 mb-1.5">
+                                                        <span className="text-[9px] font-mono bg-[var(--color-bg-primary)]/50 px-1.5 py-0.5 rounded text-[var(--color-text-secondary)] font-bold">
+                                                            L{error.line}
+                                                        </span>
+                                                        {error.code && (
+                                                            <span className="text-[9px] font-mono text-[var(--color-text-tertiary)]">
+                                                                {error.code}
+                                                            </span>
+                                                        )}
+                                                        <span className="ml-auto text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-[var(--color-bg-primary)] text-[var(--color-text-tertiary)]">
+                                                            {error.severity}
+                                                        </span>
+                                                    </div>
+                                                    <p className="text-[11px] font-medium text-[var(--color-text-primary)] leading-relaxed">
+                                                        {error.message}
+                                                    </p>
+                                                    {error.fixable && (
+                                                        <div className="mt-2 flex items-center gap-1 text-[10px] text-[var(--color-blue)] font-medium">
+                                                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                                            </svg>
+                                                            Auto-fix available
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ))
+                                ) : (
+                                    <div className="flex flex-col items-center justify-center h-40 text-[var(--color-text-tertiary)] animate-fade-in-soft">
+                                        <div className="w-12 h-12 rounded-xl bg-[var(--color-bg-secondary)]/50 flex items-center justify-center mb-3">
+                                            <svg className="w-6 h-6 opacity-40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                        </div>
+                                        <p className="text-xs font-medium">No errors found</p>
+                                        <p className="text-[10px] mt-0.5 opacity-50">Your YAML is valid!</p>
+                                    </div>
+                                )
+                            )}
+                        </div>
+                    </aside>
+                )}
+            </div>
+
+            {/* Documentation Overlay */}
+            {showDocumentation && (
+                <Documentation onClose={() => setShowDocumentation(false)} />
+            )}
+
+            {/* Toast Container */}
+            <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-2 pointer-events-none">
+                {toasts.map(toast => (
                     <div
                         key={toast.id}
-                        className="glass-strong texture px-4 py-3 rounded-xl shadow-lg flex items-center gap-3 animate-slide-up pointer-events-auto border border-[var(--color-border)]/50"
+                        className={`pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg backdrop-blur-xl animate-slide-up ${toast.type === 'success' ? 'bg-[var(--color-green)]/10 text-[var(--color-green)] border border-[var(--color-green)]/20' :
+                            toast.type === 'error' ? 'bg-[var(--color-red)]/10 text-[var(--color-red)] border border-[var(--color-red)]/20' :
+                                'bg-[var(--color-blue)]/10 text-[var(--color-blue)] border border-[var(--color-blue)]/20'
+                            }`}
                     >
-                        <span className={`text-lg ${toast.type === 'success' ? 'text-[var(--color-green)]' :
-                            toast.type === 'error' ? 'text-[var(--color-red)]' : 'text-[var(--color-blue)]'
-                            }`}>
-                            {toast.type === 'success' ? '✓' : toast.type === 'error' ? '✕' : 'ℹ'}
-                        </span>
-                        <span className="text-[13px] font-medium text-[var(--color-text-primary)]">{toast.message}</span>
+                        {toast.type === 'success' ? (
+                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                        ) : toast.type === 'error' ? (
+                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        ) : (
+                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        )}
+                        <span className="text-sm font-medium">{toast.message}</span>
                     </div>
                 ))}
             </div>
 
             {/* Confetti */}
-            {
-                showConfetti && (
-                    <div className="fixed inset-0 pointer-events-none z-[200]">
-                        {[...Array(20)].map((_, i) => (
+            {showConfetti && (
+                <div className="fixed inset-0 pointer-events-none z-50 overflow-hidden">
+                    {[...Array(50)].map((_, i) => {
+                        const colors = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'];
+                        return (
                             <div
                                 key={i}
-                                className="absolute"
+                                className="confetti-piece absolute w-2 h-2 rounded-sm"
                                 style={{
                                     left: `${Math.random() * 100}%`,
                                     top: '-10px',
-                                    animation: `confetti-fall ${2 + Math.random()}s linear forwards`,
-                                    animationDelay: `${Math.random() * 0.5}s`,
+                                    backgroundColor: colors[Math.floor(Math.random() * colors.length)],
+                                    animation: `fall ${Math.random() * 3 + 2}s linear forwards`,
+                                    animationDelay: `${Math.random() * 2}s`
                                 }}
-                            >
-                                <div
-                                    className="w-2 h-2 rounded-full"
-                                    style={{
-                                        backgroundColor: ['#34C759', '#30D158', '#007AFF', '#0A84FF'][Math.floor(Math.random() * 4)],
-                                    }}
-                                />
-                            </div>
-                        ))}
-                    </div>
-                )
-            }
-        </div >
+                            />
+                        );
+                    })}
+                </div>
+            )}
+
+            <style>{`
+                @keyframes fall {
+                    to {
+                        transform: translateY(100vh) rotate(720deg);
+                    }
+                }
+            `}</style>
+        </div>
     );
 };

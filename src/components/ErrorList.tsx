@@ -184,7 +184,7 @@ export function ErrorList({ changes, onLineClick }: ErrorListProps) {
                                         </Box>
 
                                         {/* Code Diff */}
-                                        {changeItem.original && changeItem.fixed && changeItem.type !== 'STRUCTURE' && (
+                                        {changeItem.original && changeItem.fixed && changeItem.type !== 'structure' && (
                                             <Box className="mt-2 space-y-1">
                                                 <Box className="bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 p-2 rounded">
                                                     <Typography variant="caption" className="text-red-700 dark:text-red-300 font-mono block">

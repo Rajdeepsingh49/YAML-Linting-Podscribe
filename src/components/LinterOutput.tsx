@@ -33,7 +33,7 @@ export const LinterOutput: React.FC<LinterOutputProps> = ({
     warnings,
     indentationErrors = [],
     loading,
-    documentCount = 0,
+
     onFixIndentation,
     onFixSyntax
 }) => {

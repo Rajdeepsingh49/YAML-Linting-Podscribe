@@ -8,8 +8,7 @@
 import type { K8sResourceSchema, FieldDefinition } from './schema-types.js';
 import {
     METADATA_FIELDS,
-    CONTAINER_FIELDS,
-    PROBE_FIELDS,
+
     VOLUME_FIELDS,
     POD_SPEC_FIELDS,
     LABEL_SELECTOR_FIELDS

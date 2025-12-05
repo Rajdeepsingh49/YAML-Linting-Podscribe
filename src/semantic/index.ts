@@ -3,7 +3,7 @@
  * Main entry point for the intelligent semantic YAML validator
  */
 
-export { IntelligentYAMLFixer } from './intelligent-fixer.js';
+export { MultiPassFixer as IntelligentYAMLFixer } from './intelligent-fixer.js';
 export { SemanticParser } from './semantic-parser.js';
 export { ContextAnalyzer } from './context-analyzer.js';
 export { IndentationTracker } from './indentation-tracker.js';

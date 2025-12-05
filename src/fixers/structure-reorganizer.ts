@@ -5,10 +5,7 @@
  * to their correct positions based on the resource schema.
  */
 
-import type { K8sResourceSchema, FieldDefinition } from '../schema/schema-types.js';
-import { getSchema, isKnownKind, getFieldPath, getRequiredPaths } from '../schema/k8s-schemas.js';
-import type { ASTNode, MapNode, ScalarNode, RootNode, DocumentNode } from '../parser/ast-types.js';
-import { ASTBuilder } from '../parser/ast-builder.js';
+
 
 // ==========================================
 // TYPES
@@ -252,28 +249,6 @@ const FIELD_LOCATIONS: Record<string, Record<string, string>> = {
     }
 };
 
-/**
- * Nested structure expectations
- * These are fields that should be nested inside containers or other parent contexts
- */
-const NESTED_CONTAINER_FIELDS = new Set([
-    'image', 'imagePullPolicy', 'command', 'args', 'workingDir',
-    'ports', 'containerPort', 'env', 'envFrom', 'resources',
-    'limits', 'requests', 'volumeMounts', 'livenessProbe',
-    'readinessProbe', 'startupProbe', 'lifecycle', 'securityContext',
-    'stdin', 'tty', 'terminationMessagePath', 'terminationMessagePolicy'
-]);
-
-const PROBE_FIELDS = new Set([
-    'httpGet', 'tcpSocket', 'exec', 'grpc',
-    'initialDelaySeconds', 'periodSeconds', 'timeoutSeconds',
-    'successThreshold', 'failureThreshold'
-]);
-
-const VOLUME_MOUNT_FIELDS = new Set([
-    'mountPath', 'subPath', 'readOnly', 'mountPropagation'
-]);
-
 // ==========================================
 // STRUCTURE REORGANIZER CLASS
 // ==========================================
@@ -371,8 +346,7 @@ export class StructureReorganizer {
                 }
 
                 // Check if field exists at target already
-                let existsAtTarget = false;
-                let current = doc;
+                let current: any = doc;
                 for (const part of pathParts) {
                     if (current && current[part] !== undefined) {
                         current = current[part];

@@ -1,5 +1,5 @@
 import express from 'express';
-import { YAMLValidator } from '../../src/core/yaml-validator-complete.ts';
+import { MultiPassFixer } from '../../src/semantic/intelligent-fixer.ts';
 
 const router = express.Router();
 
@@ -16,7 +16,9 @@ const router = express.Router();
  *   }
  * }
  */
-router.post('/validate', (req, res) => {
+router.post('/validate', async (req, res) => {
+    const startTime = process.hrtime.bigint();
+
     try {
         const { content, options = {} } = req.body;
 
@@ -30,46 +32,54 @@ router.post('/validate', (req, res) => {
             });
         }
 
-        const indentSize = options.indentSize || 2;
-        const validator = new YAMLValidator(indentSize);
-
-        // 1. Validate first to see what we're dealing with
-        const validationResult = validator.validate(content, { indentSize });
-
-        // 2. Attempt to fix
-        const fixResult = validator.fix(content, {
-            indentSize,
-            aggressive: options.aggressive || false
+        // Use the advanced MultiPassFixer
+        const fixer = new MultiPassFixer({
+            indentSize: options.indentSize || 2,
+            aggressive: options.aggressive || false,
+            confidenceThreshold: 0.6 // Lower threshold to catch more issues as requested
         });
 
-        // 3. If aggressive mode is on, try structural fixes
-        let finalContent = fixResult.content;
-        let structuralExplanation = '';
+        // Run the fix pipeline
+        const fixResult = await fixer.fix(content);
 
-        if (options.aggressive) {
-            // We need to guess the kind or pass it in. For now, let's default to Deployment if unknown, 
-            // but the fixStructural method has a default.
-            // Ideally we parse the content to find the kind, but fixStructural does its own parsing.
-            const structuralResult = validator.fixStructural(finalContent);
-            if (structuralResult.restructuredLines.length > 0 || structuralResult.explanation) {
-                finalContent = structuralResult.content;
-                structuralExplanation = structuralResult.explanation;
-            }
-        }
+        // Calculate timing
+        const endTime = process.hrtime.bigint();
+        const timeNanoseconds = endTime - startTime;
+        const timeMilliseconds = Number(timeNanoseconds) / 1_000_000;
+        const processingTime = Math.round(timeMilliseconds * 10) / 10;
 
-        // 4. Re-validate the fixed content to confirm validity
-        const finalValidation = validator.validate(finalContent, { indentSize });
+        // Calculate statistics
+        const totalIssues = fixResult.changes.length + fixResult.errors.length;
+        const fixesApplied = fixResult.changes.length;
+        const successRate = totalIssues > 0 ? Math.round((fixesApplied / totalIssues) * 100) : 100;
+
+        const statistics = {
+            totalIssues: totalIssues,
+            fixesApplied: fixesApplied,
+            averageConfidence: fixResult.confidence,
+            confidencePercent: Math.round(fixResult.confidence * 100),
+            processingTime: processingTime,
+            successRate: successRate
+        };
+
+        // Console logging for verification
+        console.log('=== VALIDATION COMPLETE ===');
+        console.log('Total issues:', statistics.totalIssues);
+        console.log('Fixed issues:', statistics.fixesApplied);
+        console.log('Success rate:', statistics.successRate + '%');
+        console.log('Avg confidence:', (statistics.averageConfidence * 100).toFixed(1) + '%');
+        console.log('Processing time:', statistics.processingTime + 'ms');
 
         return res.json({
             success: true,
-            originalValid: validationResult.valid,
-            fixed: finalContent,
-            errors: finalValidation.errors, // Errors remaining after fix
-            structuralIssues: finalValidation.structuralIssues,
-            fixedCount: fixResult.fixedCount + (structuralExplanation ? 1 : 0),
+            originalValid: fixResult.changes.length === 0 && fixResult.errors.length === 0,
+            fixed: fixResult.content,
+            errors: fixResult.errors.map(e => ({ message: e, severity: 'error', line: 0 })), // Map string errors to objects
+            fixedCount: fixResult.changes.length,
             changes: fixResult.changes,
-            structuralExplanation,
-            isValid: finalValidation.valid
+            isValid: fixResult.isValid,
+            statistics: statistics,
+            confidence: fixResult.confidence
         });
 
     } catch (error) {
